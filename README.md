@@ -1,139 +1,103 @@
 # Input Aware Display Switcher
 
-A Windows desktop utility that automatically switches display profiles based on which physical input device is currently active.
+Input Aware Display Switcher is a planned Windows desktop utility that changes display output automatically based on which physical input device is active.
 
-This project is being developed as both:
+The project is intended to serve both as a practical desktop tool and as a final-year software engineering/dissertation project, so the repository is structured to support prototyping, evaluation, and disciplined iteration from the start.
 
-- a genuinely useful Windows utility
-- a technically substantial final year / dissertation-style software engineering project
+## Problem Statement
 
-## Overview
+Windows display switching is often manual and awkward for setups that span more than one physical location, such as a desk monitor in one room and a TV in another. The intended application will monitor device activity, associate devices with logical zones, and switch to the most appropriate display profile without requiring repeated manual intervention.
 
-Windows display switching is often manual, awkward, and unreliable for multi-room or multi-zone setups.
+Typical target scenario:
 
-This application aims to solve that by monitoring activity from specific physical keyboards and mice, mapping those devices to logical zones, and automatically switching the display profile to the most appropriate screen.
+- Desk keyboard and mouse should favor a desk monitor profile.
+- Living room keyboard and mouse should favor a TV profile.
+- The system should avoid unnecessary switching, recover sensibly from edge cases, and provide enough diagnostics to understand why a switch happened.
 
-### Example use case
+## Current Status
 
-A PC is connected to:
+The repository is currently in foundation and feasibility mode. The immediate focus is to:
 
-- a desk monitor in one room
-- a TV in another room via HDMI
+- validate whether Windows can reliably distinguish physical keyboards and mice
+- validate whether display profiles can be switched programmatically on the target hardware
+- document architecture, risks, conventions, and evaluation criteria before implementation begins
 
-Input devices are split by location:
+No application logic, GUI implementation, or production switching pipeline is being claimed as complete at this stage.
 
-- desk keyboard + mouse
-- living room keyboard + optional mouse
+## Planned Architecture Summary
 
-When desk devices are active, the application switches to the monitor profile.  
-When living room devices are active, the application switches to the TV profile.
+The intended design is modular so that Windows-specific APIs, decision-making logic, persistence, and user interface concerns can evolve independently.
 
-The goal is to remove the need for manual `Win + P` switching and make multi-display, multi-room usage much more seamless.
+Planned modules:
 
----
+- Input Monitor
+- Device Registry
+- Zone Mapper
+- Decision Engine
+- State Manager
+- Profile Manager
+- Display Switcher
+- Config Storage
+- Logging / Telemetry
+- GUI Application
 
-## Core Objectives
+Further detail lives in [docs/architecture/overview.md](docs/architecture/overview.md), [docs/architecture/modules.md](docs/architecture/modules.md), and [docs/architecture/decisions.md](docs/architecture/decisions.md).
 
-- Detect activity from specific physical input devices
-- Map devices to user-defined zones
-- Map zones to display profiles
-- Automatically switch display output based on current activity
-- Prevent accidental or excessive switching with cooldowns and priority rules
-- Provide a full Windows GUI for setup, control, diagnostics, and configuration
+## Roadmap Summary
 
----
+The current plan is split into six phases:
 
-## Planned Feature Set
+1. Feasibility
+2. MVP automatic switching
+3. GUI and persistence
+4. Robustness and smart logic
+5. Polish
+6. Stretch and research
 
-### Must-have
-
-- Physical keyboard and mouse detection
-- Device-to-zone mapping
-- Display profile management
-- Automatic switching engine
-- Cooldown / anti-thrashing logic
-- Zone priority system
-- Manual lock / override
-- GUI configuration application
-- Persistent configuration
-- Logging / diagnostics
-
-### Good to have
-
-- System tray mode
-- Start with Windows
-- Confidence thresholds
-- Recovery / fallback profile
-- Multi-zone scalability
-- App-aware rules
-
-### Stretch goals
-
-- Lock screen support investigation
-- Windows service companion
-- Advanced weighted decision engine
-
----
-
-## Proposed Tech Stack
-
-- **Language:** C#
-- **Platform:** .NET
-- **GUI:** WPF
-- **Configuration:** JSON
-- **Logging:** structured logging
-- **Platform target:** Windows only
-
----
-
-## Proposed Architecture
-
-The system is intended to be modular and split into the following areas:
-
-- **Input Monitor** — captures device-specific keyboard/mouse activity
-- **Device Registry** — stores known devices and metadata
-- **Zone Mapper** — maps devices to logical user-defined zones
-- **Decision Engine** — determines whether switching should occur
-- **State Manager** — tracks active zone, cooldowns, locks, recent activity
-- **Profile Manager** — stores and applies display profiles
-- **Display Switcher** — triggers the actual Windows display/profile change
-- **Config Storage** — persists rules, profiles, and device mappings
-- **Logging / Telemetry** — records input events and switching decisions
-- **GUI Application** — user-facing configuration and diagnostics interface
-
----
-
-## Key Technical Risks
-
-This project intentionally explores several non-trivial engineering challenges:
-
-1. Reliably distinguishing physical keyboards and mice on Windows
-2. Programmatically switching display profiles in a robust way
-3. Preventing false switching and rapid profile thrashing
-4. Handling disconnected displays and HDMI edge cases
-5. Preserving meaningful device identity across reconnects / reboots
-6. Investigating feasibility of lock screen or secure desktop support
-
----
-
-## Project Status
-
-Current focus:
-
-- feasibility prototype for device-specific input detection
-- feasibility prototype for programmatic display switching
-
-The first major milestone is to prove that:
-- multiple physical input devices can be differentiated reliably
-- display profiles can be switched programmatically
-- the two can be connected into a working MVP
-
----
+The full roadmap and milestone breakdown are documented in [docs/planning/roadmap.md](docs/planning/roadmap.md) and [docs/planning/milestones.md](docs/planning/milestones.md).
 
 ## Repository Structure
 
 ```text
-/src
-/docs
-/prototypes
-/tests
+.
+|-- .github/
+|-- docs/
+|   |-- architecture/
+|   |-- planning/
+|   |-- evaluation/
+|   `-- research/
+|-- prototypes/
+|   |-- raw-input-test/
+|   `-- display-switch-test/
+|-- src/
+`-- tests/
+```
+
+High-level intent:
+
+- `docs/` holds architecture, planning, evaluation, and research material.
+- `prototypes/` holds scoped feasibility spikes before production code is committed.
+- `src/` will later contain the production application and supporting libraries.
+- `tests/` will hold automated tests and supporting test assets where appropriate.
+
+## Technology Direction
+
+- Language: C#
+- Runtime/platform: .NET
+- Desktop UI: WPF
+- Configuration: JSON
+- Diagnostics: structured logging
+- Operating system: Windows only
+
+Some of these choices are still documented as provisional where feasibility evidence is still needed. See [docs/architecture/decisions.md](docs/architecture/decisions.md).
+
+## Development Focus
+
+Near-term work should stay focused on:
+
+- feasibility prototypes
+- documentation and design clarification
+- evaluation planning
+- repository hygiene and workflow discipline
+
+Implementation of Raw Input handling, display switching logic, GUI screens, and the decision engine belongs to later issues once the feasibility work has produced evidence.

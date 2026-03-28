@@ -218,6 +218,22 @@ PublishScripts/
 !**/[Pp]ackages/build/
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
+
+# Rider / JetBrains
+.idea/
+
+# VS Code
+.vscode/
+
+# Local tooling
+.codex
+
+# Test output and coverage convenience paths
+TestResults/
+coverage/
+
+# NuGet local folders
+.nuget/
 # NuGet v3's project.json files produces more ignorable files
 *.nuget.props
 *.nuget.targets

@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
-  - name: General Question
-    url: https://github.com/your-repo/discussions
-    about: Ask general questions here
+  - name: Project Overview and Docs
+    url: https://github.com/AMfromUofG/input-aware-display-switcher#readme
+    about: Review the project overview, roadmap, and supporting documentation before opening a general issue.
