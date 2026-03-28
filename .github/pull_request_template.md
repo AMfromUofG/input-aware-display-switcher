@@ -1,28 +1,29 @@
 ## Summary
-What does this PR do?
 
-## Changes
+Describe the purpose of this change and the main outcome.
+
+## Related Issue
+
+Closes #
+
+## Scope of Changes
+
 - Change 1
 - Change 2
 - Change 3
 
-## Related Issues
-Closes #
+## Validation
 
-## Type of Change
-- [ ] Feature
-- [ ] Bug fix
-- [ ] Refactor
-- [ ] Documentation
-- [ ] Test
+Describe the checks, manual testing, or review performed for this change.
 
-## How Has This Been Tested?
-Describe testing performed
+## Documentation Impact
 
-## Screenshots (if applicable)
+- [ ] No documentation changes required
+- [ ] Documentation updated in this PR
 
 ## Checklist
-- [ ] Code builds successfully
-- [ ] Tests pass
-- [ ] No breaking changes introduced
-- [ ] Documentation updated if needed
+
+- [ ] The change is focused and within issue scope
+- [ ] Relevant docs were updated where needed
+- [ ] Validation appropriate to the change was completed
+- [ ] No unrelated implementation or cleanup was bundled into this PR
