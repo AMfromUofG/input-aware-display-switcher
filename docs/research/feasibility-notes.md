@@ -11,6 +11,18 @@ This file is the running log for early technical spikes. It should capture evide
 
 ## Raw Input Feasibility
 
+### Objective
+
+Determine whether Windows Raw Input can reliably distinguish between multiple physical keyboards and mice connected to the same system, and whether the identifiers exposed are usable enough to support later mapping decisions.
+
+### Implementation Summary
+
+- Prototype project: `prototypes/raw-input-test/RawInputPrototype`
+- Windows-only WPF harness
+- Registers for raw keyboard and mouse input
+- Logs `WM_INPUT` events with source device handle, parsed identifier, and event summary
+- Enumerates current keyboard and mouse devices using Raw Input device APIs
+
 ### Questions
 
 - Can Windows reliably distinguish between multiple physical keyboards?
@@ -19,7 +31,23 @@ This file is the running log for early technical spikes. It should capture evide
 
 ### Findings
 
-- No findings recorded yet.
+- Prototype harness added; empirical findings are still pending manual testing on Windows hardware.
+- No behaviour conclusions recorded yet.
+
+### Manual Test Checklist
+
+- Connect two keyboards and press keys on each in separate bursts.
+- Connect two mice if available and move or click each in separate bursts.
+- Compare the logged device handles and identifiers between the devices.
+- Note whether identifiers remain stable while the app stays open.
+- Optionally disconnect and reconnect one device to record whether the handle or identifier changes.
+
+### Evidence To Record
+
+- screenshot of the device snapshot table
+- copied event log excerpt showing distinct devices
+- Windows version and hardware notes
+- reconnect observations if tested
 
 ## Display Switching Feasibility
 
