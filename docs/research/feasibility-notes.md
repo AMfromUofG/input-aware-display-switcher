@@ -9,45 +9,89 @@ This file is the running log for early technical spikes. It should capture evide
 - Prefer concrete observations over assumptions.
 - Link to prototype code, screenshots, logs, or issue discussions where useful.
 
-## Raw Input Feasibility
+## Raw Input Runtime Feasibility
 
 ### Objective
 
-Determine whether Windows Raw Input can reliably distinguish between multiple physical keyboards and mice connected to the same system, and whether the identifiers exposed are usable enough to support later mapping decisions.
+Determine whether Windows Raw Input can reliably distinguish between multiple physical keyboards and mice connected to the same system, and whether runtime event attribution is strong enough to support later switching logic.
 
-### Implementation Summary
+### Prototype Summary
 
 - Prototype project: `prototypes/raw-input-test/RawInputPrototype`
 - Windows-only WPF harness
 - Registers for raw keyboard and mouse input
-- Logs `WM_INPUT` events with source device handle, parsed identifier, and event summary
-- Enumerates current keyboard and mouse devices using Raw Input device APIs
+- Logs `WM_INPUT` events with source device handle and event summary
+- Enumerates currently visible keyboard and mouse devices
+- Supports richer identity inspection for later persistence analysis
 
-### Questions
+### Observed Behaviour On The Current Test Setup
 
-- Can Windows reliably distinguish between multiple physical keyboards?
-- Can Windows reliably distinguish between multiple physical mice?
-- Are the available device identifiers stable enough for mapping?
+- Raw Input successfully distinguished multiple physical keyboards and mice during a running session.
+- Distinct physical devices produced distinct event sources and raw handles at runtime.
+- This included separate desk peripherals and a living-room handheld keyboard/trackpad setup.
+- A shared wireless receiver still exposed separate keyboard and pointing-device activity in the current prototype.
+- This suggests runtime attribution for keyboard and mouse activity is feasible on the tested setup.
 
-### Findings
+### Key Evidence Gathered
 
-- Prototype harness added; empirical findings are still pending manual testing on Windows hardware.
-- No behaviour conclusions recorded yet.
+- live event log entries showed distinct sources for different keyboards and mice during the same session
+- snapshot rows showed separate devices for the handheld keyboard and its pointing component despite the shared overall setup
+- reconnect testing showed device identity needed more analysis beyond the active raw handle
 
-### Manual Test Checklist
+### Current Conclusion
 
-- Connect two keyboards and press keys on each in separate bursts.
-- Connect two mice if available and move or click each in separate bursts.
-- Compare the logged device handles and identifiers between the devices.
-- Note whether identifiers remain stable while the app stays open.
-- Optionally disconnect and reconnect one device to record whether the handle or identifier changes.
+Runtime device attribution appears feasible for keyboards and pointing devices on the current test setup. This reduces the early risk that all devices would collapse into one undifferentiated stream, but it does not by itself solve durable persistence.
 
-### Evidence To Record
+## Device Identity / Persistence Feasibility
 
-- screenshot of the device snapshot table
-- copied event log excerpt showing distinct devices
-- Windows version and hardware notes
-- reconnect observations if tested
+### Objective
+
+Determine which identifiers and metadata can be used to recognise the same physical device across reconnects, restarts, and other re-enumeration events.
+
+### Observed Behaviour On The Current Test Setup
+
+- Raw input handles were useful for identifying the active source during a running session.
+- Unplugging and reconnecting a keyboard caused the raw handle to change.
+- Restarting the prototype without changing the physical connection preserved the newly assigned handle.
+- This suggests the raw handle is useful for live-session attribution but is not a safe sole persisted identity.
+- The prototype exposed more promising metadata for persistence and reconciliation:
+  - device type
+  - VID/PID
+  - raw device path
+  - normalized path and instance-related path segments
+  - instance ID when resolvable
+  - friendly name when available
+  - candidate key and fingerprint-style summaries
+- VID/PID alone was not strong enough to treat as a durable key.
+- The observed behaviour suggests a composite identity strategy is the more realistic future direction.
+
+### Key Evidence Gathered
+
+- before/after reconnect comparison showed handle reassignment for a keyboard
+- restart testing showed the post-reconnect handle remained stable across a simple application restart
+- snapshot metadata exposed additional path- and instance-related fields that remained better persistence candidates than the raw handle
+- the prototype could surface separate keyboard and pointing identities even for a shared wireless receiver setup
+
+### Edge Cases / Scope Limits
+
+- An Xbox controller appeared with handle `0x0000000000000000` and unresolved metadata in the current harness.
+- Only the central Xbox/Guide button appeared to surface in the current prototype.
+- This suggests controller-style devices do not fit the current keyboard/mouse model cleanly and should remain outside the main switching scope for now.
+
+### Current Conclusion
+
+The current evidence supports separating runtime routing from persisted identity:
+
+- runtime routing can use active raw handles
+- persisted mappings should likely use stronger composite metadata
+- reconnect or port-change reconciliation behaviour may still be required
+
+### Open Questions
+
+- How stable is device instance ID across reboot on the same machine?
+- What changes when a wireless receiver is moved to another USB port?
+- How do Bluetooth devices behave compared with wired USB devices and shared receivers?
+- Which fallback fields are strong enough to support safe rebinding when the preferred key changes?
 
 ## Display Switching Feasibility
 
@@ -61,18 +105,7 @@ Determine whether Windows Raw Input can reliably distinguish between multiple ph
 
 - No findings recorded yet.
 
-## Stable Device Identity Findings
-
-### Questions
-
-- Which identifiers remain stable across reconnects, reboots, or wireless receiver changes?
-- Are there device classes where stability is materially worse?
-
-### Findings
-
-- No findings recorded yet.
-
-## Open Questions
+## Project-Level Open Questions
 
 - What minimum confidence is required before an automatic switch should occur?
 - What recovery behaviour is acceptable when the target display is unavailable?

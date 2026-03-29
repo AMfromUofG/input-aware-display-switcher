@@ -7,6 +7,7 @@ namespace RawInputPrototype.RawInput;
 internal sealed class DeviceInfoProvider
 {
     private static readonly Regex VidPidRegex = new(@"VID_([0-9A-F]{4}).*PID_([0-9A-F]{4})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private readonly SetupApiDeviceLookup _setupApiDeviceLookup = new();
 
     public IReadOnlyList<RawInputDeviceInfo> GetCurrentDevices()
     {
@@ -80,17 +81,31 @@ internal sealed class DeviceInfoProvider
             var info = GetDeviceInfo(deviceHandle);
             var deviceType = ToDeviceType(info.dwType);
             var name = GetDeviceName(deviceHandle);
+            var pathAnalysis = DevicePathAnalysis.Create(name);
+            var setupApiMetadata = _setupApiDeviceLookup.TryResolve(pathAnalysis);
             var (vendorId, productId) = ParseVidPid(name, info);
+            var resolvedDeviceType = deviceType == RawInputDeviceType.Unknown ? fallbackType : deviceType;
+            var details = BuildDetails(info);
 
             return new RawInputDeviceInfo
             {
                 DeviceHandle = deviceHandle,
-                DeviceType = deviceType == RawInputDeviceType.Unknown ? fallbackType : deviceType,
+                DeviceType = resolvedDeviceType,
                 DeviceName = string.IsNullOrWhiteSpace(name) ? "(device name unavailable)" : name,
                 VendorId = vendorId,
                 ProductId = productId,
-                Identifier = BuildIdentifier(deviceType == RawInputDeviceType.Unknown ? fallbackType : deviceType, vendorId, productId, name),
-                Details = BuildDetails(info)
+                Identifier = BuildIdentifier(resolvedDeviceType, vendorId, productId, name),
+                Details = details,
+                DevicePathAnalysis = pathAnalysis,
+                SetupApiMetadata = setupApiMetadata,
+                IdentityAnalysis = DeviceFingerprintBuilder.Analyze(
+                    resolvedDeviceType,
+                    deviceHandle,
+                    vendorId,
+                    productId,
+                    details,
+                    pathAnalysis,
+                    setupApiMetadata)
             };
         }
         catch (Win32Exception)

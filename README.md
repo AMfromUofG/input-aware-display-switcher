@@ -19,8 +19,11 @@ Typical target scenario:
 The repository is currently in foundation and feasibility mode. The immediate focus is to:
 
 - validate whether Windows can reliably distinguish physical keyboards and mice
+- capture which device metadata appears usable for later persistence and reconciliation
 - validate whether display profiles can be switched programmatically on the target hardware
 - document architecture, risks, conventions, and evaluation criteria before implementation begins
+
+Early Raw Input feasibility work on the current test setup is promising: multiple physical keyboards and mice could be distinguished at runtime, but persisted device identity still requires a stronger composite strategy than raw handles alone.
 
 No application logic, GUI implementation, or production switching pipeline is being claimed as complete at this stage.
 

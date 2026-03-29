@@ -26,15 +26,31 @@ This file acts as a lightweight ADR log for early project decisions. Entries may
 - Rationale: JSON is simple to inspect, easy to version during development, and sufficient for the expected configuration complexity.
 - Consequence: Configuration schemas should be kept explicit and versioning should be considered once persistence is implemented.
 
-## ADR-004: Treat Raw Input as the leading candidate for device-specific input detection
+## ADR-004: Treat Raw Input as the leading candidate for runtime device-specific input detection
 
-- Status: Provisional
-- Date: 2026-03-28
-- Decision: Early feasibility work will prioritise Windows Raw Input for distinguishing physical keyboards and mice.
-- Rationale: Raw Input appears to be the most promising Windows mechanism for receiving device-associated input events.
-- Consequence: Prototype work should validate whether it provides stable enough device identity and event coverage for the target scenarios before it is adopted in production.
+- Status: Accepted
+- Date: 2026-03-29
+- Decision: Windows Raw Input is the leading approach for runtime keyboard and mouse source attribution.
+- Rationale: Prototype work on the current test setup showed that Raw Input can distinguish multiple physical keyboards and mice at runtime, including a shared-receiver handheld keyboard and pointing-device setup.
+- Consequence: Production design can continue on the basis that runtime routing should start from Raw Input for keyboards and pointing devices, while still allowing for further hardware validation.
 
-## ADR-005: Isolate Windows-specific API code from core logic
+## ADR-005: Treat runtime routing and persisted device identity as separate concerns
+
+- Status: Accepted
+- Date: 2026-03-29
+- Decision: Runtime device attribution and persisted device identity should not be treated as the same problem.
+- Rationale: Prototype testing showed that raw handles are useful during a running session but can change after unplug/reconnect, which makes them unsuitable as a sole persisted identity.
+- Consequence: Later architecture should use active raw handles for live routing and a different persisted identity strategy for saved device mappings.
+
+## ADR-006: Persisted device identity should use composite metadata rather than raw handles alone
+
+- Status: Accepted
+- Date: 2026-03-29
+- Decision: Future persisted device identity should be based on stronger composite metadata, not raw handles alone.
+- Rationale: Current findings suggest that path- and instance-related metadata are more promising persistence candidates, while VID/PID alone is too weak and raw handles are not durable enough.
+- Consequence: The future Device Registry should likely store a preferred key plus supporting reconciliation metadata rather than assuming one universally stable field.
+
+## ADR-007: Isolate Windows-specific API code from core logic
 
 - Status: Accepted
 - Date: 2026-03-28
@@ -42,7 +58,15 @@ This file acts as a lightweight ADR log for early project decisions. Entries may
 - Rationale: This keeps switching policy, state handling, and mapping logic easier to test and reason about.
 - Consequence: Core modules should consume abstractions and domain models rather than direct Windows API calls.
 
-## ADR-006: Treat feasibility evidence as a gate before production implementation
+## ADR-008: Keep controller-style devices out of scope for the main switching logic unless later evidence changes that decision
+
+- Status: Provisional
+- Date: 2026-03-29
+- Decision: The main switching logic should remain focused on keyboards and pointing devices for now.
+- Rationale: Current prototype behaviour did not surface controller-style devices cleanly enough to treat them as part of the same runtime and persistence model.
+- Consequence: Architecture and planning should not assume controller support until later evidence justifies expanding scope.
+
+## ADR-009: Treat feasibility evidence as a gate before production implementation
 
 - Status: Accepted
 - Date: 2026-03-28
