@@ -43,6 +43,7 @@ Examples:
 - Put architecture, planning, evaluation, and research notes under `docs/`.
 - Put early technical spikes under `prototypes/`.
 - Put future production application code under `src/`.
+- If lightweight shared domain code is added later, place platform-neutral models under `src/Core/Domain/`.
 - Put automated tests and test assets under `tests/`.
 
 ## Documentation Expectations
