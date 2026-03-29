@@ -73,3 +73,11 @@ This file acts as a lightweight ADR log for early project decisions. Entries may
 - Decision: Feasibility prototypes and evaluation notes should be completed before significant production implementation begins.
 - Rationale: The project includes several platform-level uncertainties that could materially affect scope and design.
 - Consequence: Early repository work should prioritise prototypes, documentation, and decision records over premature application scaffolding.
+
+## ADR-010: Treat simple database-topology `SetDisplayConfig` switching as unproven on the current setup
+
+- Status: Provisional
+- Date: 2026-03-29
+- Decision: The project should not assume that simple generic database-topology `SetDisplayConfig` calls are sufficient for reliable MVP switching on the current test setup.
+- Rationale: The display switching prototype could inspect and track active topology changes usefully, but the current topology-flag switching path returned `ERROR_INVALID_PARAMETER (87)` for some useful actions on the tested setup.
+- Consequence: Further switching work should remain in the feasibility/research lane and may need a more explicit path/mode-based strategy or another OS-supported switching route before production design depends on automatic display changes.

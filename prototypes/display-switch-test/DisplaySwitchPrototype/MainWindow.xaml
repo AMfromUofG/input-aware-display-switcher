@@ -1,0 +1,186 @@
+<Window x:Class="DisplaySwitchPrototype.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Display Switching Feasibility Prototype"
+        Width="1680"
+        Height="980"
+        MinWidth="1200"
+        MinHeight="760">
+  <Grid Margin="12">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="3*" />
+      <RowDefinition Height="2*" />
+    </Grid.RowDefinitions>
+
+    <StackPanel Grid.Row="0"
+                Margin="0,0,0,12">
+      <TextBlock FontSize="22"
+                 FontWeight="SemiBold"
+                 Text="Windows Display Switching Feasibility Harness" />
+      <TextBlock Margin="0,6,0,0"
+                 TextWrapping="Wrap">
+        This prototype reads the current active display configuration through QueryDisplayConfig, resolves display names where available,
+        and lets you test a small number of SetDisplayConfig paths while logging whether Windows rejected the request at validation time or at apply time.
+      </TextBlock>
+    </StackPanel>
+
+    <Grid Grid.Row="1"
+          Margin="0,0,0,12">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+
+      <WrapPanel x:Name="ButtonsPanel"
+                 Grid.Row="0"
+                 Margin="0,0,0,8">
+        <Button Margin="0,0,12,8"
+                Padding="12,6"
+                Click="RefreshButton_Click"
+                Content="Refresh Current Display State" />
+        <Button Margin="0,0,12,8"
+                Padding="12,6"
+                Click="CaptureSnapshotButton_Click"
+                Content="Capture Current Snapshot" />
+        <Button Margin="0,0,12,8"
+                Padding="12,6"
+                Click="RestoreSnapshotButton_Click"
+                Content="Restore Captured Snapshot" />
+        <Button Margin="0,0,12,8"
+                Padding="12,6"
+                Click="InternalOnlyButton_Click"
+                Content="Attempt Internal / Primary Only" />
+        <Button Margin="0,0,12,8"
+                Padding="12,6"
+                Click="ExternalOnlyButton_Click"
+                Content="Attempt External / Secondary Only" />
+        <Button Margin="0,0,12,8"
+                Padding="12,6"
+                Click="ExtendButton_Click"
+                Content="Attempt Extend" />
+        <Button Margin="0,0,12,8"
+                Padding="12,6"
+                Click="CloneButton_Click"
+                Content="Attempt Clone / Duplicate" />
+        <Button Margin="0,0,12,8"
+                Padding="12,6"
+                Click="ClearLogButton_Click"
+                Content="Clear Log" />
+      </WrapPanel>
+
+      <StackPanel Grid.Row="1">
+        <TextBlock x:Name="StatusTextBlock"
+                   TextWrapping="Wrap" />
+        <TextBlock x:Name="CapturedSnapshotTextBlock"
+                   Margin="0,6,0,0"
+                   TextWrapping="Wrap" />
+      </StackPanel>
+    </Grid>
+
+    <Grid Grid.Row="2"
+          Margin="0,0,0,12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="1.2*" />
+        <ColumnDefinition Width="1.8*" />
+      </Grid.ColumnDefinitions>
+
+      <GroupBox Grid.Column="0"
+                Header="Current display snapshot"
+                Margin="0,0,12,0">
+        <TextBox x:Name="SnapshotTextBox"
+                 Margin="8"
+                 FontFamily="Consolas"
+                 IsReadOnly="True"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto"
+                 HorizontalScrollBarVisibility="Auto" />
+      </GroupBox>
+
+      <GroupBox Grid.Column="1"
+                Header="Active display paths">
+        <DataGrid x:Name="PathsDataGrid"
+                  Margin="8"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  EnableRowVirtualization="True"
+                  HeadersVisibility="Column"
+                  IsReadOnly="True"
+                  SelectionMode="Single">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="#"
+                                Binding="{Binding PathIndex}"
+                                Width="45" />
+            <DataGridTextColumn Header="Source"
+                                Binding="{Binding SourceName}"
+                                Width="170" />
+            <DataGridTextColumn Header="Target"
+                                Binding="{Binding TargetName}"
+                                Width="260" />
+            <DataGridTextColumn Header="Output"
+                                Binding="{Binding OutputTechnology}"
+                                Width="140" />
+            <DataGridTextColumn Header="Source Mode"
+                                Binding="{Binding SourceMode}"
+                                Width="170" />
+            <DataGridTextColumn Header="Target Mode"
+                                Binding="{Binding TargetMode}"
+                                Width="170" />
+            <DataGridTextColumn Header="Refresh"
+                                Binding="{Binding RefreshRate}"
+                                Width="95" />
+            <DataGridTextColumn Header="Available"
+                                Binding="{Binding TargetAvailability}"
+                                Width="85" />
+            <DataGridTextColumn Header="Flags"
+                                Binding="{Binding PathFlags}"
+                                Width="130" />
+            <DataGridTextColumn Header="Identifiers"
+                                Binding="{Binding PathIdentifiers}"
+                                Width="*" />
+          </DataGrid.Columns>
+        </DataGrid>
+      </GroupBox>
+    </Grid>
+
+    <GroupBox Grid.Row="3"
+              Header="Diagnostics log">
+      <DataGrid x:Name="DiagnosticsDataGrid"
+                Margin="8"
+                AutoGenerateColumns="False"
+                CanUserAddRows="False"
+                CanUserDeleteRows="False"
+                EnableRowVirtualization="True"
+                HeadersVisibility="Column"
+                IsReadOnly="True"
+                SelectionMode="Single">
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="Timestamp"
+                              Binding="{Binding TimestampText}"
+                              Width="170" />
+          <DataGridTextColumn Header="Action"
+                              Binding="{Binding Action}"
+                              Width="190" />
+          <DataGridTextColumn Header="API Path"
+                              Binding="{Binding ApiPath}"
+                              Width="220" />
+          <DataGridTextColumn Header="Flags"
+                              Binding="{Binding Flags}"
+                              Width="250" />
+          <DataGridTextColumn Header="Status"
+                              Binding="{Binding Status}"
+                              Width="100" />
+          <DataGridTextColumn Header="Code"
+                              Binding="{Binding StatusCodeText}"
+                              Width="110" />
+          <DataGridTextColumn Header="Details"
+                              Binding="{Binding Details}"
+                              Width="*" />
+        </DataGrid.Columns>
+      </DataGrid>
+    </GroupBox>
+  </Grid>
+</Window>
