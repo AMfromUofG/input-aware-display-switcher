@@ -1,39 +1,80 @@
 # Raw Input Prototype
 
-This folder contains a Windows-only feasibility harness for Issue #2. Its job is to answer one question: can Windows Raw Input distinguish between multiple physical keyboards and mice connected to the same machine?
+This folder contains the Windows-only feasibility harness used for:
 
-## Prototype Purpose
-
-The prototype does not try to implement the future application. It only:
-
-- registers for keyboard and mouse Raw Input
-- listens for `WM_INPUT` and `WM_INPUT_DEVICE_CHANGE`
-- logs which device produced each event
-- shows a snapshot of currently detected keyboard and mouse devices
-- exposes enough detail to compare two physical devices manually
+- Issue #2: prototype physical device detection using Raw Input
+- Issue #3: investigate stable device identity and metadata for persistence
 
 The runnable project lives at `prototypes/raw-input-test/RawInputPrototype`.
 
-## What It Tests
+## Purpose
 
-- whether keyboard events include a device-specific source handle
-- whether mouse events include a device-specific source handle
-- whether Raw Input exposes a stable device path or identifier while the app is running
-- whether two physical keyboards and/or two physical mice appear as distinct event sources
-- whether reconnecting a device triggers useful arrival and removal information
+This is research tooling, not the application.
 
-## What The Window Shows
+It is intended to answer two narrow questions:
 
-The WPF window has two sections:
+- can Raw Input attribute keyboard and mouse activity to the correct physical device at runtime?
+- what metadata appears useful for recognising the same physical device later?
 
-- a device snapshot table with device type, handle, parsed VID/PID when available, raw device path, and type-specific details
-- a bounded live event log with timestamp, event type, foreground/background source, device handle, identifier, and an event summary
+It does not implement:
 
-The event log is capped at 300 entries so the UI stays usable during manual testing.
+- persistence storage
+- zone mapping
+- switching logic
+- tray behaviour
+- main app UI
 
-## How to Run
+## What The Prototype Shows
 
-Run this from Windows, not WSL. WPF and Raw Input are Windows-only.
+The current prototype provides:
+
+- a live event log showing runtime event attribution
+- a device snapshot table for currently visible keyboards and mice
+- a selected-device analysis view for identity-related metadata
+- clipboard export for snapshot comparison during restart and reconnect testing
+
+The current snapshot and analysis tooling can expose:
+
+- Raw Input handle
+- device type
+- raw device path
+- VID/PID when derivable
+- `RID_DEVICE_INFO` details
+- normalized path and related path fragments
+- instance ID when resolvable
+- friendly name when available
+- candidate key and fingerprint-style research summaries
+
+## Findings Established So Far
+
+On the current test setup, the prototype has already helped establish that:
+
+- Raw Input can distinguish multiple physical keyboards and mice at runtime.
+- Distinct physical devices produced distinct event sources and handles during a running session.
+- A shared wireless receiver can still expose separate keyboard and pointing-device identities.
+- Raw handles are useful for live runtime identification, but are not a safe sole persisted identity.
+- VID/PID is useful supporting metadata, but not strong enough on its own for persistence.
+- A composite identity strategy appears more realistic for later persistence work.
+
+## What It Does Not Prove
+
+The prototype does not yet prove that:
+
+- a single persisted identifier will remain stable across every reconnect, reboot, receiver change, or port move
+- every device class will fit the same model
+- controller-style devices should be included in the main switching scope
+
+The current controller behaviour is a reminder of that last point:
+
+- an Xbox controller appeared with handle `0x0000000000000000`
+- metadata was unresolved
+- only the Xbox/Guide button appeared in the current harness
+
+This suggests controller support should remain out of scope for the main keyboard/mouse-driven switching logic.
+
+## How To Use It
+
+Run this from Windows, not WSL. WPF, Raw Input, and SetupAPI device enumeration are Windows-only.
 
 1. Install the .NET 8 SDK on Windows if it is not already installed.
 2. Open Windows Terminal, PowerShell, or a Developer Command Prompt.
@@ -51,65 +92,39 @@ dotnet run
 
 You can also open `RawInputPrototype.csproj` in Visual Studio 2022 and run it there.
 
-## Exact Manual Test Steps
+## Suggested Manual Workflow
 
-Use these steps to test with two keyboards or two mice:
+### Runtime Attribution Check
 
-1. Connect at least two keyboards and/or two mice to the same Windows machine.
-2. Start the prototype and leave it open.
-3. Check the device snapshot table first.
-4. Identify whether the table shows separate rows for the devices you plan to test.
-5. Press a key on keyboard A several times.
-6. Press a different key on keyboard B several times.
-7. Compare the `Handle` and `Device` values in the live event log for keyboard A versus keyboard B.
-8. If you have two mice, move mouse A, click once or twice, then repeat with mouse B.
-9. Compare the `Handle` and `Device` values in the live event log for mouse A versus mouse B.
-10. Disconnect and reconnect one device if you want to observe arrival/removal behavior and whether the identifier changes.
+1. Start the prototype.
+2. Press keys on one keyboard, then another.
+3. Move or click one mouse, then another.
+4. Compare the event log and confirm the runtime source changes with the physical device.
 
-## What To Look For
+### Restart / Reconnect Identity Check
 
-During testing, focus on whether:
+1. Start the prototype and select the target device row.
+2. Copy the device snapshot.
+3. Close and reopen the prototype, then compare the same device again.
+4. Disconnect and reconnect the device, refresh the snapshot, and compare again.
+5. If practical, move a receiver or USB connection to another port and compare once more.
 
-- keyboard A and keyboard B generate different device handles and/or identifiers
-- mouse A and mouse B generate different device handles and/or identifiers
-- the same physical device keeps the same identifier while the app remains open
-- the snapshot metadata matches the devices that are generating events
-- reconnecting a device changes the identifier or device handle unexpectedly
+Useful fields to compare:
 
-## What Counts As Success Or Failure
+- Raw Input handle
+- raw device path
+- normalized path
+- instance ID
+- candidate key / fingerprint
+- VID/PID
+- friendly name and related descriptive metadata
 
-Success for this prototype means:
+## Interpreting The Results
 
-- the window receives raw keyboard and mouse input events
-- each event can be associated with a device handle
-- at least two physical keyboards and/or two physical mice can be told apart by the identifiers shown in the UI
+Use the current evidence conservatively:
 
-Partial success means:
+- raw handles appear suitable for live session tracking
+- persisted mappings should likely be based on stronger composite metadata
+- reconnect or rebind behaviour may still be needed if the preferred persisted key changes
 
-- events are received and handles differ, but the metadata is noisy, incomplete, or inconsistent enough that more research is needed
-
-Failure means:
-
-- raw events are not received reliably
-- multiple physical devices collapse into the same source identity
-- the available identifiers are too unstable or ambiguous to support later mapping logic
-
-## Evidence To Capture
-
-Record real observations only. Useful evidence includes:
-
-- a screenshot of the device snapshot table
-- copied event log entries showing keyboard A versus keyboard B and/or mouse A versus mouse B
-- Windows version, device models, and connection type notes
-- reconnect observations, including whether handles or identifiers changed
-
-The `Copy Event Log` button copies the current visible log rows to the clipboard to make this easier.
-
-## Limitations
-
-- This is a feasibility spike, not production architecture.
-- It does not switch displays, define zones, store mappings, or persist anything.
-- It relies on Raw Input device handles, device paths, and parsed VID/PID values when available.
-- It does not currently resolve polished human-friendly device names through SetupAPI or other device-enumeration layers.
-- Some hardware setups may surface composite devices, shared receivers, or integrated devices in ways that need further interpretation.
-- The prototype uses `RIDEV_INPUTSINK`, so it can continue receiving input while the window remains open in the background.
+Avoid treating the current findings as universal until they have been tested on more hardware and connection types.
