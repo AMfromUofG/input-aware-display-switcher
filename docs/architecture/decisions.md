@@ -81,3 +81,27 @@ This file acts as a lightweight ADR log for early project decisions. Entries may
 - Decision: The project should not assume that simple generic database-topology `SetDisplayConfig` calls are sufficient for reliable MVP switching on the current test setup.
 - Rationale: The display switching prototype could inspect and track active topology changes usefully, but the current topology-flag switching path returned `ERROR_INVALID_PARAMETER (87)` for some useful actions on the tested setup.
 - Consequence: Further switching work should remain in the feasibility/research lane and may need a more explicit path/mode-based strategy or another OS-supported switching route before production design depends on automatic display changes.
+
+## ADR-011: Model display profiles as logical intents rather than low-level Windows display payloads
+
+- Status: Accepted
+- Date: 2026-03-29
+- Decision: The core domain model will represent display profiles as logical desired outcomes such as `DeskOnly`, `LivingRoomOnly`, `Extend`, `Duplicate`, or `SafeRestore`.
+- Rationale: Current research indicates that display topology inspection is feasible, but reliable switching is not yet proven with the current generic topology-flag path. Encoding low-level Windows payloads into the core model would overstate certainty and couple the model to an unproven execution strategy.
+- Consequence: The Display Switcher must translate a logical profile into an execution path later, while the core model remains stable even if the implementation route changes.
+
+## ADR-012: Use explicit runtime state and decision objects rather than a flatter config-only model
+
+- Status: Accepted
+- Date: 2026-03-29
+- Decision: The architecture will include explicit runtime state, switching decision, and execution result concepts rather than only persisted configuration records.
+- Rationale: The project needs to explain why a switch happened, why it was blocked, and what evidence was used. A flatter config-only model would make diagnostics and future UI explanation much harder.
+- Consequence: Later implementation should preserve decision reasons, candidate evidence, and execution outcomes as first-class data rather than burying them in imperative control flow or logs alone.
+
+## ADR-013: Keep switching policy separate from zones while allowing zone-level precedence
+
+- Status: Accepted
+- Date: 2026-03-29
+- Decision: Zones will carry simple precedence information and profile references, while switching rules such as cooldowns, lock behaviour, and minimum confidence will live in separate policy objects.
+- Rationale: Embedding all rule behaviour directly into zone records would blur configuration boundaries, duplicate policy, and make global behaviour harder to reason about.
+- Consequence: Later MVP logic can stay simple while still supporting future expansion to weighted or more advanced rules without reshaping the basic zone model.
