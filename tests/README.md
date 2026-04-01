@@ -1,11 +1,17 @@
 # Testing Strategy
 
-The `tests/` directory is reserved for future automated tests and supporting test assets.
+The `tests/` directory contains automated coverage for the new MVP switching slice.
 
-Planned testing approach:
+Current focus:
 
-- unit tests for mapping, policy, and decision logic
-- integration-style tests where practical for persistence and orchestration boundaries
-- manual validation for Windows-specific hardware behaviour that cannot be reliably automated in early stages
+- unit tests for device registry resolution and zone mapping
+- unit tests for decision engine v1 rule outcomes
+- orchestration-boundary tests to prove blocked decisions do not execute and allowed decisions do
+- JSON persistence round-trip testing for the registry store
 
-Hardware-dependent behaviour should also be documented alongside prototype findings in `docs/research/feasibility-notes.md`.
+Still intentionally out of scope for automation:
+
+- end-to-end Raw Input hardware attribution
+- real Windows display switching success across monitor/TV hardware combinations
+
+Those behaviours remain prototype/manual-validation concerns and should continue to be recorded in `docs/research/feasibility-notes.md`.
