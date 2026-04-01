@@ -43,3 +43,41 @@ internal sealed class RecordingDisplaySwitcher : IDisplaySwitcher
             "Fake display switcher"));
     }
 }
+
+internal sealed class FailingDisplaySwitcher : IDisplaySwitcher
+{
+    public int CallCount { get; private set; }
+
+    public Task<SwitchExecutionResult> ApplyAsync(DisplayProfile profile, CancellationToken cancellationToken = default)
+    {
+        CallCount++;
+
+        return Task.FromResult(SwitchExecutionResult.Failure(
+            profile.DisplayProfileId,
+            "Fake display switcher",
+            "Injected switch failure."));
+    }
+}
+
+internal sealed class TestInputActivitySource : IInputActivitySource
+{
+    public event InputActivityObservedHandler? ActivityObserved;
+
+    public Task PublishAsync(RuntimeDeviceObservation observation, CancellationToken cancellationToken = default)
+    {
+        return ActivityObserved?.Invoke(observation, cancellationToken) ?? Task.CompletedTask;
+    }
+}
+
+internal sealed class RecordingOutcomeRecorder : ISwitchingOutcomeRecorder
+{
+    private readonly List<SwitchingOutcome> _outcomes = [];
+
+    public IReadOnlyList<SwitchingOutcome> Outcomes => _outcomes;
+
+    public Task RecordAsync(SwitchingOutcome outcome, CancellationToken cancellationToken = default)
+    {
+        _outcomes.Add(outcome);
+        return Task.CompletedTask;
+    }
+}
