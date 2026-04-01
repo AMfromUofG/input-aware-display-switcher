@@ -105,3 +105,11 @@ This file acts as a lightweight ADR log for early project decisions. Entries may
 - Decision: Zones will carry simple precedence information and profile references, while switching rules such as cooldowns, lock behaviour, and minimum confidence will live in separate policy objects.
 - Rationale: Embedding all rule behaviour directly into zone records would blur configuration boundaries, duplicate policy, and make global behaviour harder to reason about.
 - Consequence: Later MVP logic can stay simple while still supporting future expansion to weighted or more advanced rules without reshaping the basic zone model.
+
+## ADR-014: Use implementation hints to translate logical profiles into the first Windows switching path
+
+- Status: Accepted
+- Date: 2026-04-01
+- Decision: `DisplayProfile` remains a logical domain concept, while the initial Windows switcher may use optional implementation hints such as `windows.topology` to map a logical profile onto `SetDisplayConfig` database-topology actions.
+- Rationale: The current architecture intentionally keeps profiles logical, but the first Windows execution path can only safely apply a small set of topology-based actions. Implementation hints let the infrastructure bridge that gap without leaking Windows API details into the core model.
+- Consequence: Zone-specific profiles such as `DeskOnly` or `LivingRoomOnly` can exist in the domain immediately, while Windows execution stays honest about which profiles are directly supported and which require explicit mapping or later refinement.

@@ -16,16 +16,27 @@ Typical target scenario:
 
 ## Current Status
 
-The repository is currently in foundation and feasibility mode. The immediate focus is to:
+The repository now has both:
 
-- validate whether Windows can reliably distinguish physical keyboards and mice
-- capture which device metadata appears usable for later persistence and reconciliation
-- validate whether display profiles can be switched programmatically on the target hardware
-- document architecture, risks, conventions, and evaluation criteria before implementation begins
+- feasibility prototypes under `prototypes/`
+- an initial production MVP slice under `src/` and `tests/`
 
-Early Raw Input feasibility work on the current test setup is promising: multiple physical keyboards and mice could be distinguished at runtime, but persisted device identity still requires a stronger composite strategy than raw handles alone.
+What is now implemented:
 
-No application logic, GUI implementation, or production switching pipeline is being claimed as complete at this stage.
+- a platform-neutral core model for runtime devices, persisted device identities, zones, display profiles, runtime state, decisions, and execution results
+- a JSON-backed device registry with zone/profile resolution
+- a rule-based decision engine v1 with explicit allowed, blocked, and no-op outcomes
+- an orchestration path from runtime observation to optional display execution
+- an initial Windows display switcher abstraction backed by `SetDisplayConfig` database-topology calls
+
+What remains intentionally incomplete:
+
+- Raw Input integration into the production pipeline
+- WPF application shell and configuration UI
+- richer persistence/versioning support
+- hardware-proven robust display switching across all target setups
+
+Early Raw Input feasibility work on the current test setup remains promising: multiple physical keyboards and mice could be distinguished at runtime, but persisted device identity still benefits from a stronger composite strategy than raw handles alone.
 
 ## Planned Architecture Summary
 
@@ -80,8 +91,8 @@ High-level intent:
 
 - `docs/` holds architecture, planning, evaluation, and research material.
 - `prototypes/` holds scoped feasibility spikes before production code is committed.
-- `src/` will later contain the production application and supporting libraries.
-- `tests/` will hold automated tests and supporting test assets where appropriate.
+- `src/` contains the current production libraries for core logic and infrastructure adapters.
+- `tests/` contains automated tests for registry resolution, decision logic, orchestration, and JSON persistence.
 
 ## Technology Direction
 
@@ -98,9 +109,7 @@ Some of these choices are still documented as provisional where feasibility evid
 
 Near-term work should stay focused on:
 
-- feasibility prototypes
-- documentation and design clarification
-- evaluation planning
-- repository hygiene and workflow discipline
-
-Implementation of Raw Input handling, display switching logic, GUI screens, and the decision engine belongs to later issues once the feasibility work has produced evidence.
+- wiring real Raw Input observations into the production orchestration layer
+- validating Windows switching behaviour on target hardware and refining the execution strategy where needed
+- adding the WPF shell, configuration flows, and runtime diagnostics views
+- continuing to document behaviour, risks, and evaluation findings as the MVP matures

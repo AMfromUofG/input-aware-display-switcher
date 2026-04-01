@@ -1,11 +1,17 @@
 # Source Layout
 
-The `src/` directory is reserved for future production application code.
+The `src/` directory now contains the first production-ready MVP slice for the automatic switching pipeline.
 
-The likely long-term split is:
+Current projects:
 
-- `App` for the desktop application shell and UI integration
-- `Core` for domain logic such as zone mapping, state handling, and switching decisions
-- `Infrastructure` for Windows APIs, configuration storage, and logging
+- `InputAwareDisplaySwitcher.Core` for platform-neutral domain and application logic
+- `InputAwareDisplaySwitcher.Infrastructure` for JSON persistence and Windows display switching adapters
 
-The exact project structure should be decided after the feasibility prototypes confirm the technical approach.
+The current split follows the architecture docs directly:
+
+- `Core/Domain` models runtime device observations, persisted devices, zones, display profiles, policy, decisions, and execution outcomes
+- `Core/Application` contains the device registry service, decision engine v1, and orchestration path from observation to attempted switch
+- `Infrastructure/Configuration` contains JSON-backed registry persistence
+- `Infrastructure/Windows` contains the initial Windows display switcher implementation behind a core abstraction
+
+No WPF shell has been added yet. The current production code focuses on the reusable core + infrastructure boundaries needed for Issues #6, #7, and #8.
