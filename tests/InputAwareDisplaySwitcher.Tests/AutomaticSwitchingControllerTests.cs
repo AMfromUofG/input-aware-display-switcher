@@ -1,8 +1,10 @@
 using InputAwareDisplaySwitcher.Core.Application;
 using InputAwareDisplaySwitcher.Core.Domain.Devices;
+using InputAwareDisplaySwitcher.Core.Domain.Diagnostics;
 using InputAwareDisplaySwitcher.Core.Domain.Profiles;
 using InputAwareDisplaySwitcher.Core.Domain.Switching;
 using InputAwareDisplaySwitcher.Core.Domain.Zones;
+using InputAwareDisplaySwitcher.Infrastructure.Diagnostics;
 
 namespace InputAwareDisplaySwitcher.Tests;
 
@@ -14,7 +16,8 @@ public sealed class AutomaticSwitchingControllerTests
         var input = new TestInputActivitySource();
         var switcher = new RecordingDisplaySwitcher();
         var recorder = new RecordingOutcomeRecorder();
-        var controller = CreateController(input, switcher, recorder, new ApplicationRuntimeState(), new SwitchingPolicy { Cooldown = TimeSpan.Zero });
+        var diagnostics = new DiagnosticsService();
+        var controller = CreateController(input, switcher, recorder, diagnostics, new ApplicationRuntimeState(), new SwitchingPolicy { Cooldown = TimeSpan.Zero });
 
         controller.Start();
         await input.PublishAsync(CreateMappedObservation());
@@ -23,6 +26,7 @@ public sealed class AutomaticSwitchingControllerTests
         Assert.Equal("desk-profile", switcher.LastProfile?.DisplayProfileId);
         Assert.Single(recorder.Outcomes);
         Assert.Equal(SwitchDecisionStatus.Allowed, recorder.Outcomes[0].Decision.Status);
+        Assert.Contains(diagnostics.Records, record => record.EventType == DiagnosticEventTypes.InputActivityDetected);
     }
 
     [Fact]
@@ -31,7 +35,8 @@ public sealed class AutomaticSwitchingControllerTests
         var input = new TestInputActivitySource();
         var switcher = new RecordingDisplaySwitcher();
         var recorder = new RecordingOutcomeRecorder();
-        var controller = CreateController(input, switcher, recorder);
+        var diagnostics = new DiagnosticsService();
+        var controller = CreateController(input, switcher, recorder, diagnostics);
 
         var outcome = await controller.HandleObservationAsync(new RuntimeDeviceObservation
         {
@@ -45,6 +50,7 @@ public sealed class AutomaticSwitchingControllerTests
         Assert.Equal(SwitchDecisionReason.UnknownDevice, outcome.Decision.Reason);
         Assert.Equal(0, switcher.CallCount);
         Assert.Equal(outcome, recorder.Outcomes.Single());
+        Assert.Contains(diagnostics.Records, record => record.EventType == DiagnosticEventTypes.SwitchBlocked);
     }
 
     [Fact]
@@ -53,6 +59,7 @@ public sealed class AutomaticSwitchingControllerTests
         var input = new TestInputActivitySource();
         var switcher = new RecordingDisplaySwitcher();
         var recorder = new RecordingOutcomeRecorder();
+        var diagnostics = new DiagnosticsService();
         var runtimeState = new ApplicationRuntimeState
         {
             LastSwitchAtUtc = DateTimeOffset.UtcNow.AddSeconds(-5)
@@ -62,6 +69,7 @@ public sealed class AutomaticSwitchingControllerTests
             input,
             switcher,
             recorder,
+            diagnostics,
             runtimeState,
             new SwitchingPolicy { Cooldown = TimeSpan.FromSeconds(30) });
 
@@ -70,6 +78,7 @@ public sealed class AutomaticSwitchingControllerTests
         Assert.Equal(SwitchDecisionStatus.Blocked, outcome.Decision.Status);
         Assert.Equal(SwitchDecisionReason.CooldownActive, outcome.Decision.Reason);
         Assert.Equal(0, switcher.CallCount);
+        Assert.Contains(diagnostics.Records, record => record.EventType == DiagnosticEventTypes.SwitchBlocked);
     }
 
     [Fact]
@@ -78,18 +87,20 @@ public sealed class AutomaticSwitchingControllerTests
         var input = new TestInputActivitySource();
         var switcher = new RecordingDisplaySwitcher();
         var recorder = new RecordingOutcomeRecorder();
+        var diagnostics = new DiagnosticsService();
         var runtimeState = new ApplicationRuntimeState
         {
             IsManualSwitchingLocked = true
         };
 
-        var controller = CreateController(input, switcher, recorder, runtimeState);
+        var controller = CreateController(input, switcher, recorder, diagnostics, runtimeState);
 
         var outcome = await controller.HandleObservationAsync(CreateMappedObservation());
 
         Assert.Equal(SwitchDecisionStatus.Blocked, outcome.Decision.Status);
         Assert.Equal(SwitchDecisionReason.ManualLockActive, outcome.Decision.Reason);
         Assert.Equal(0, switcher.CallCount);
+        Assert.Contains(diagnostics.Records, record => record.EventType == DiagnosticEventTypes.SwitchBlocked);
     }
 
     [Fact]
@@ -98,7 +109,8 @@ public sealed class AutomaticSwitchingControllerTests
         var input = new TestInputActivitySource();
         var switcher = new RecordingDisplaySwitcher();
         var recorder = new RecordingOutcomeRecorder();
-        var controller = CreateController(input, switcher, recorder, new ApplicationRuntimeState(), new SwitchingPolicy { Cooldown = TimeSpan.Zero });
+        var diagnostics = new DiagnosticsService();
+        var controller = CreateController(input, switcher, recorder, diagnostics, new ApplicationRuntimeState(), new SwitchingPolicy { Cooldown = TimeSpan.Zero });
 
         var outcome = await controller.HandleObservationAsync(CreateMappedObservation());
 
@@ -106,6 +118,9 @@ public sealed class AutomaticSwitchingControllerTests
         Assert.Equal(SwitchExecutionStatus.Succeeded, outcome.ExecutionResult.Status);
         Assert.Equal("desk-profile", outcome.ExecutionResult.DisplayProfileId);
         Assert.Equal(outcome, recorder.Outcomes.Single());
+        Assert.Contains(diagnostics.Records, record => record.EventType == DiagnosticEventTypes.SwitchAttempted);
+        Assert.Contains(diagnostics.Records, record => record.EventType == DiagnosticEventTypes.SwitchSucceeded);
+        Assert.Contains(diagnostics.Records, record => record.EventType == DiagnosticEventTypes.RuntimeStateUpdated);
     }
 
     [Fact]
@@ -114,7 +129,8 @@ public sealed class AutomaticSwitchingControllerTests
         var input = new TestInputActivitySource();
         var switcher = new FailingDisplaySwitcher();
         var recorder = new RecordingOutcomeRecorder();
-        var controller = CreateController(input, switcher, recorder, new ApplicationRuntimeState(), new SwitchingPolicy { Cooldown = TimeSpan.Zero });
+        var diagnostics = new DiagnosticsService();
+        var controller = CreateController(input, switcher, recorder, diagnostics, new ApplicationRuntimeState(), new SwitchingPolicy { Cooldown = TimeSpan.Zero });
 
         var outcome = await controller.HandleObservationAsync(CreateMappedObservation());
 
@@ -123,26 +139,30 @@ public sealed class AutomaticSwitchingControllerTests
         Assert.Equal("Injected switch failure.", outcome.ExecutionResult.ErrorMessage);
         Assert.Equal(1, switcher.CallCount);
         Assert.Equal(outcome, recorder.Outcomes.Single());
+        Assert.Contains(diagnostics.Records, record => record.EventType == DiagnosticEventTypes.SwitchFailed);
     }
 
     private static AutomaticSwitchingController CreateController(
         TestInputActivitySource input,
         InputAwareDisplaySwitcher.Core.Abstractions.IDisplaySwitcher switcher,
         RecordingOutcomeRecorder recorder,
+        DiagnosticsService diagnostics,
         ApplicationRuntimeState? runtimeState = null,
         SwitchingPolicy? policy = null)
     {
         var orchestrator = new SwitchingOrchestrator(
             new DeviceRegistryService(new InMemoryDeviceRegistryStore(CreateMappedSnapshot())),
             new DecisionEngineV1(),
-            switcher);
+            switcher,
+            diagnostics);
 
         return new AutomaticSwitchingController(
             input,
             orchestrator,
             new InMemoryRuntimeStateStore(runtimeState),
             recorder,
-            policy ?? new SwitchingPolicy());
+            policy ?? new SwitchingPolicy(),
+            diagnostics);
     }
 
     private static DeviceRegistrySnapshot CreateMappedSnapshot()
