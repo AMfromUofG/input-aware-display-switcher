@@ -1,0 +1,71 @@
+<UserControl x:Class="InputAwareDisplaySwitcher.App.Views.ZonesProfilesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <TextBlock Margin="0,0,0,12"
+               Foreground="#FF4B5563"
+               TextWrapping="Wrap"
+               Text="Zones remain the user-defined logical contexts, and profiles remain logical display intents. This view is the placeholder for editing both." />
+
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="16" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+
+      <GroupBox Grid.Column="0"
+                Header="Zones">
+        <DataGrid ItemsSource="{Binding Zones}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  IsReadOnly="True">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Name"
+                                Binding="{Binding Name}"
+                                Width="2*" />
+            <DataGridTextColumn Header="Priority"
+                                Binding="{Binding Priority}"
+                                Width="*" />
+            <DataGridTextColumn Header="Profile"
+                                Binding="{Binding PreferredDisplayProfileId}"
+                                Width="2*" />
+            <DataGridCheckBoxColumn Header="Enabled"
+                                    Binding="{Binding IsEnabled}"
+                                    Width="90" />
+          </DataGrid.Columns>
+        </DataGrid>
+      </GroupBox>
+
+      <GroupBox Grid.Column="2"
+                Header="Display Profiles">
+        <DataGrid ItemsSource="{Binding Profiles}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  IsReadOnly="True">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="Name"
+                                Binding="{Binding Name}"
+                                Width="2*" />
+            <DataGridTextColumn Header="Intent"
+                                Binding="{Binding IntentKind}"
+                                Width="*" />
+            <DataGridTextColumn Header="Description"
+                                Binding="{Binding Description}"
+                                Width="2*" />
+            <DataGridCheckBoxColumn Header="Enabled"
+                                    Binding="{Binding IsEnabled}"
+                                    Width="90" />
+          </DataGrid.Columns>
+        </DataGrid>
+      </GroupBox>
+    </Grid>
+  </Grid>
+</UserControl>
