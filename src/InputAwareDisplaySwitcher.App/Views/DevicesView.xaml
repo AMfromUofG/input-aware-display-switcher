@@ -1,0 +1,41 @@
+<UserControl x:Class="InputAwareDisplaySwitcher.App.Views.DevicesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <TextBlock Margin="0,0,0,12"
+               Foreground="#FF4B5563"
+               TextWrapping="Wrap"
+               Text="This section will become the main device registry editor. For now it shows the persisted device records loaded from configuration." />
+
+    <DataGrid Grid.Row="1"
+              ItemsSource="{Binding Devices}"
+              AutoGenerateColumns="False"
+              CanUserAddRows="False"
+              CanUserDeleteRows="False"
+              IsReadOnly="True"
+              HeadersVisibility="Column">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Friendly Name"
+                            Binding="{Binding FriendlyName}"
+                            Width="2*" />
+        <DataGridTextColumn Header="Kind"
+                            Binding="{Binding DeviceKind}"
+                            Width="*" />
+        <DataGridTextColumn Header="Assigned Zone"
+                            Binding="{Binding AssignedZoneId}"
+                            Width="*" />
+        <DataGridTextColumn Header="Persistence Key"
+                            Binding="{Binding PreferredPersistenceKey}"
+                            Width="2*" />
+        <DataGridCheckBoxColumn Header="Enabled"
+                                Binding="{Binding IsEnabled}"
+                                Width="90" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </Grid>
+</UserControl>
