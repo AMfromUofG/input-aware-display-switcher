@@ -1,3 +1,5 @@
+using InputAwareDisplaySwitcher.Core.Domain.Devices;
+using InputAwareDisplaySwitcher.Core.Domain.Diagnostics;
 using InputAwareDisplaySwitcher.Core.Domain.Switching;
 
 namespace InputAwareDisplaySwitcher.Core.Application;
@@ -9,6 +11,7 @@ public sealed class AutomaticSwitchingController
     private readonly IRuntimeStateStore _runtimeStateStore;
     private readonly ISwitchingOutcomeRecorder _outcomeRecorder;
     private readonly SwitchingPolicy _policy;
+    private readonly IDiagnosticsService _diagnostics;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private bool _isStarted;
 
@@ -17,13 +20,15 @@ public sealed class AutomaticSwitchingController
         SwitchingOrchestrator orchestrator,
         IRuntimeStateStore runtimeStateStore,
         ISwitchingOutcomeRecorder outcomeRecorder,
-        SwitchingPolicy policy)
+        SwitchingPolicy policy,
+        IDiagnosticsService? diagnostics = null)
     {
         _inputActivitySource = inputActivitySource;
         _orchestrator = orchestrator;
         _runtimeStateStore = runtimeStateStore;
         _outcomeRecorder = outcomeRecorder;
         _policy = policy;
+        _diagnostics = diagnostics ?? NullDiagnosticsService.Instance;
     }
 
     public void Start()
@@ -35,6 +40,11 @@ public sealed class AutomaticSwitchingController
 
         _inputActivitySource.ActivityObserved += OnActivityObservedAsync;
         _isStarted = true;
+        _diagnostics.Record(
+            DiagnosticCategories.Application,
+            DiagnosticEventTypes.SwitchingControllerStarted,
+            "Automatic switching controller started.",
+            details: CreatePolicyDetails(_policy));
     }
 
     public void Stop()
@@ -46,18 +56,34 @@ public sealed class AutomaticSwitchingController
 
         _inputActivitySource.ActivityObserved -= OnActivityObservedAsync;
         _isStarted = false;
+        _diagnostics.Record(
+            DiagnosticCategories.Application,
+            DiagnosticEventTypes.SwitchingControllerStopped,
+            "Automatic switching controller stopped.");
     }
 
     public async Task<SwitchingOutcome> HandleObservationAsync(
-        Core.Domain.Devices.RuntimeDeviceObservation observation,
+        RuntimeDeviceObservation observation,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(observation);
+
+        _diagnostics.Record(
+            DiagnosticCategories.Input,
+            DiagnosticEventTypes.InputActivityDetected,
+            "Input activity was observed.",
+            details: CreateObservationDetails(observation));
 
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             var runtimeState = await _runtimeStateStore.LoadAsync(cancellationToken).ConfigureAwait(false);
+
+            _diagnostics.Record(
+                DiagnosticCategories.Switching,
+                DiagnosticEventTypes.RuntimeStateLoaded,
+                "Runtime state loaded for switching evaluation.",
+                details: CreateRuntimeStateDetails(runtimeState));
 
             var outcome = await _orchestrator
                 .ProcessAsync(observation, runtimeState, _policy, cancellationToken)
@@ -68,6 +94,12 @@ public sealed class AutomaticSwitchingController
             await _runtimeStateStore.SaveAsync(updatedState, cancellationToken).ConfigureAwait(false);
             await _outcomeRecorder.RecordAsync(outcome, cancellationToken).ConfigureAwait(false);
 
+            _diagnostics.Record(
+                DiagnosticCategories.Switching,
+                DiagnosticEventTypes.RuntimeStateUpdated,
+                "Runtime state updated after processing input.",
+                details: CreateStateTransitionDetails(runtimeState, updatedState, outcome));
+
             return outcome;
         }
         finally
@@ -76,7 +108,7 @@ public sealed class AutomaticSwitchingController
         }
     }
 
-    private Task OnActivityObservedAsync(Core.Domain.Devices.RuntimeDeviceObservation observation, CancellationToken cancellationToken)
+    private Task OnActivityObservedAsync(RuntimeDeviceObservation observation, CancellationToken cancellationToken)
     {
         return HandleObservationAsync(observation, cancellationToken);
     }
@@ -95,6 +127,65 @@ public sealed class AutomaticSwitchingController
                 ? outcome.ExecutionResult.RecordedAtUtc
                 : currentState.LastSwitchAtUtc,
             LastMatchedDeviceId = outcome.Decision.MatchedDeviceId ?? currentState.LastMatchedDeviceId
+        };
+    }
+
+    private static IReadOnlyDictionary<string, string?> CreateObservationDetails(RuntimeDeviceObservation observation)
+    {
+        return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["sessionDeviceId"] = observation.SessionDeviceId,
+            ["friendlyName"] = observation.FriendlyName,
+            ["deviceKind"] = observation.DeviceKind.ToString(),
+            ["instanceId"] = observation.InstanceId,
+            ["rawDevicePath"] = observation.RawDevicePath,
+            ["normalizedDevicePath"] = observation.NormalizedDevicePath,
+            ["vendorId"] = observation.VendorId,
+            ["productId"] = observation.ProductId,
+            ["observedAtUtc"] = observation.ObservedAtUtc.ToString("O")
+        };
+    }
+
+    private static IReadOnlyDictionary<string, string?> CreatePolicyDetails(SwitchingPolicy policy)
+    {
+        return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["cooldown"] = policy.Cooldown.ToString(),
+            ["manualLockStopsSwitching"] = policy.ManualLockStopsSwitching.ToString(),
+            ["allowSameProfileRefresh"] = policy.AllowSameProfileRefresh.ToString()
+        };
+    }
+
+    private static IReadOnlyDictionary<string, string?> CreateRuntimeStateDetails(ApplicationRuntimeState state)
+    {
+        return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["currentZoneId"] = state.CurrentZoneId,
+            ["currentDisplayProfileId"] = state.CurrentDisplayProfileId,
+            ["lastSwitchAtUtc"] = state.LastSwitchAtUtc?.ToString("O"),
+            ["isManualSwitchingLocked"] = state.IsManualSwitchingLocked.ToString(),
+            ["lastMatchedDeviceId"] = state.LastMatchedDeviceId
+        };
+    }
+
+    private static IReadOnlyDictionary<string, string?> CreateStateTransitionDetails(
+        ApplicationRuntimeState previousState,
+        ApplicationRuntimeState updatedState,
+        SwitchingOutcome outcome)
+    {
+        return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["previousZoneId"] = previousState.CurrentZoneId,
+            ["updatedZoneId"] = updatedState.CurrentZoneId,
+            ["previousDisplayProfileId"] = previousState.CurrentDisplayProfileId,
+            ["updatedDisplayProfileId"] = updatedState.CurrentDisplayProfileId,
+            ["previousLastSwitchAtUtc"] = previousState.LastSwitchAtUtc?.ToString("O"),
+            ["updatedLastSwitchAtUtc"] = updatedState.LastSwitchAtUtc?.ToString("O"),
+            ["previousLastMatchedDeviceId"] = previousState.LastMatchedDeviceId,
+            ["updatedLastMatchedDeviceId"] = updatedState.LastMatchedDeviceId,
+            ["decisionStatus"] = outcome.Decision.Status.ToString(),
+            ["decisionReason"] = outcome.Decision.Reason.ToString(),
+            ["executionStatus"] = outcome.ExecutionResult.Status.ToString()
         };
     }
 }

@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using InputAwareDisplaySwitcher.Core.Application;
 using InputAwareDisplaySwitcher.Core.Domain.Devices;
 
@@ -7,51 +5,35 @@ namespace InputAwareDisplaySwitcher.Infrastructure.Configuration;
 
 public sealed class JsonDeviceRegistryStore : IDeviceRegistryStore
 {
-    private readonly string _filePath;
-    private readonly JsonSerializerOptions _serializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        Converters =
-        {
-            new JsonStringEnumConverter()
-        }
-    };
+    private readonly IAppConfigurationStore _configurationStore;
 
-    public JsonDeviceRegistryStore(string filePath)
+    public JsonDeviceRegistryStore(string filePath, IDiagnosticsService? diagnostics = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
-        _filePath = filePath;
+        _configurationStore = new JsonAppConfigurationStore(filePath, diagnostics);
+    }
+
+    public JsonDeviceRegistryStore(IAppConfigurationStore configurationStore)
+    {
+        _configurationStore = configurationStore;
     }
 
     public async Task<DeviceRegistrySnapshot> LoadAsync(CancellationToken cancellationToken = default)
     {
-        if (!File.Exists(_filePath))
-        {
-            return new DeviceRegistrySnapshot();
-        }
-
-        await using var stream = File.OpenRead(_filePath);
-        var snapshot = await JsonSerializer
-            .DeserializeAsync<DeviceRegistrySnapshot>(stream, _serializerOptions, cancellationToken)
-            .ConfigureAwait(false);
-
-        return snapshot ?? new DeviceRegistrySnapshot();
+        var configuration = await _configurationStore.LoadAsync(cancellationToken).ConfigureAwait(false);
+        return configuration.DeviceRegistry ?? new DeviceRegistrySnapshot();
     }
 
     public async Task SaveAsync(DeviceRegistrySnapshot snapshot, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
-        var directory = Path.GetDirectoryName(_filePath);
-        if (!string.IsNullOrWhiteSpace(directory))
+        var configuration = await _configurationStore.LoadAsync(cancellationToken).ConfigureAwait(false);
+        var updatedConfiguration = configuration with
         {
-            Directory.CreateDirectory(directory);
-        }
+            DeviceRegistry = snapshot
+        };
 
-        await using var stream = File.Create(_filePath);
-        await JsonSerializer
-            .SerializeAsync(stream, snapshot, _serializerOptions, cancellationToken)
-            .ConfigureAwait(false);
+        await _configurationStore.SaveAsync(updatedConfiguration, cancellationToken).ConfigureAwait(false);
     }
 }

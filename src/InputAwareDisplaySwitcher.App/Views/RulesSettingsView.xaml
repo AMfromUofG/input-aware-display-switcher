@@ -1,0 +1,82 @@
+<UserControl x:Class="InputAwareDisplaySwitcher.App.Views.RulesSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel>
+      <TextBlock Margin="0,0,0,12"
+                 Foreground="#FF4B5563"
+                 TextWrapping="Wrap"
+                 Text="This section is the placeholder for later editing of switching rules and operator controls. The values below come from the configuration model now." />
+
+      <WrapPanel>
+        <Border Width="220"
+                Margin="0,0,12,12"
+                Padding="16"
+                Background="#FFF9FAFB"
+                BorderBrush="#FFE5E7EB"
+                BorderThickness="1"
+                CornerRadius="10">
+          <StackPanel>
+            <TextBlock Foreground="#FF6B7280"
+                       Text="Cooldown" />
+            <TextBlock Margin="0,6,0,0"
+                       FontSize="20"
+                       FontWeight="SemiBold"
+                       Text="{Binding Cooldown}" />
+          </StackPanel>
+        </Border>
+
+        <Border Width="220"
+                Margin="0,0,12,12"
+                Padding="16"
+                Background="#FFF9FAFB"
+                BorderBrush="#FFE5E7EB"
+                BorderThickness="1"
+                CornerRadius="10">
+          <StackPanel>
+            <TextBlock Foreground="#FF6B7280"
+                       Text="Manual Lock Stops Switching" />
+            <TextBlock Margin="0,6,0,0"
+                       FontSize="20"
+                       FontWeight="SemiBold"
+                       Text="{Binding ManualLockStopsSwitching}" />
+          </StackPanel>
+        </Border>
+
+        <Border Width="220"
+                Margin="0,0,12,12"
+                Padding="16"
+                Background="#FFF9FAFB"
+                BorderBrush="#FFE5E7EB"
+                BorderThickness="1"
+                CornerRadius="10">
+          <StackPanel>
+            <TextBlock Foreground="#FF6B7280"
+                       Text="Allow Same Profile Refresh" />
+            <TextBlock Margin="0,6,0,0"
+                       FontSize="20"
+                       FontWeight="SemiBold"
+                       Text="{Binding AllowSameProfileRefresh}" />
+          </StackPanel>
+        </Border>
+
+        <Border Width="220"
+                Margin="0,0,12,12"
+                Padding="16"
+                Background="#FFF9FAFB"
+                BorderBrush="#FFE5E7EB"
+                BorderThickness="1"
+                CornerRadius="10">
+          <StackPanel>
+            <TextBlock Foreground="#FF6B7280"
+                       Text="Current Manual Lock Preference" />
+            <TextBlock Margin="0,6,0,0"
+                       FontSize="20"
+                       FontWeight="SemiBold"
+                       Text="{Binding IsManualSwitchingLocked}" />
+          </StackPanel>
+        </Border>
+      </WrapPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
