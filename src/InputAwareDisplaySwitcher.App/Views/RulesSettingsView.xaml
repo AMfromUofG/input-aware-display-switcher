@@ -3,80 +3,164 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel>
-      <TextBlock Margin="0,0,0,12"
+      <TextBlock Margin="0,0,0,16"
                  Foreground="#FF4B5563"
                  TextWrapping="Wrap"
-                 Text="This section is the placeholder for later editing of switching rules and operator controls. The values below come from the configuration model now." />
+                 Text="Tune the safety rails for automatic switching. These values are stored in the shared JSON configuration and are validated before saving." />
 
-      <WrapPanel>
-        <Border Width="220"
-                Margin="0,0,12,12"
-                Padding="16"
-                Background="#FFF9FAFB"
-                BorderBrush="#FFE5E7EB"
-                BorderThickness="1"
-                CornerRadius="10">
-          <StackPanel>
-            <TextBlock Foreground="#FF6B7280"
-                       Text="Cooldown" />
-            <TextBlock Margin="0,6,0,0"
-                       FontSize="20"
-                       FontWeight="SemiBold"
-                       Text="{Binding Cooldown}" />
-          </StackPanel>
-        </Border>
+      <Border Margin="0,0,0,16"
+              Padding="18"
+              Background="#FFF9FAFB"
+              BorderBrush="#FFE5E7EB"
+              BorderThickness="1"
+              CornerRadius="12">
+        <StackPanel>
+          <TextBlock FontSize="18"
+                     FontWeight="SemiBold"
+                     Text="Automation" />
+          <TextBlock Margin="0,6,0,0"
+                     Foreground="#FF4B5563"
+                     TextWrapping="Wrap"
+                     Text="Turn automatic switching on or off without removing your saved device and zone mappings." />
+          <CheckBox Margin="0,14,0,0"
+                    IsChecked="{Binding AutomationEnabled}"
+                    Content="Enable automatic display switching" />
+        </StackPanel>
+      </Border>
 
-        <Border Width="220"
-                Margin="0,0,12,12"
-                Padding="16"
-                Background="#FFF9FAFB"
-                BorderBrush="#FFE5E7EB"
-                BorderThickness="1"
-                CornerRadius="10">
-          <StackPanel>
-            <TextBlock Foreground="#FF6B7280"
-                       Text="Manual Lock Stops Switching" />
-            <TextBlock Margin="0,6,0,0"
-                       FontSize="20"
-                       FontWeight="SemiBold"
-                       Text="{Binding ManualLockStopsSwitching}" />
-          </StackPanel>
-        </Border>
+      <Border Margin="0,0,0,16"
+              Padding="18"
+              Background="#FFF9FAFB"
+              BorderBrush="#FFE5E7EB"
+              BorderThickness="1"
+              CornerRadius="12">
+        <StackPanel>
+          <TextBlock FontSize="18"
+                     FontWeight="SemiBold"
+                     Text="Cooldown &amp; Activity Windows" />
+          <TextBlock Margin="0,6,0,0"
+                     Foreground="#FF4B5563"
+                     TextWrapping="Wrap"
+                     Text="Use short time windows to prevent rapid back-and-forth switching when devices wake up or multiple zones are active close together." />
 
-        <Border Width="220"
-                Margin="0,0,12,12"
-                Padding="16"
-                Background="#FFF9FAFB"
-                BorderBrush="#FFE5E7EB"
-                BorderThickness="1"
-                CornerRadius="10">
-          <StackPanel>
-            <TextBlock Foreground="#FF6B7280"
-                       Text="Allow Same Profile Refresh" />
-            <TextBlock Margin="0,6,0,0"
-                       FontSize="20"
+          <Grid Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="240" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock VerticalAlignment="Center"
                        FontWeight="SemiBold"
-                       Text="{Binding AllowSameProfileRefresh}" />
-          </StackPanel>
-        </Border>
+                       Text="Cooldown (seconds)" />
+            <StackPanel Grid.Column="1">
+              <TextBox Width="180"
+                       HorizontalAlignment="Left"
+                       Text="{Binding CooldownSecondsText, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBlock Margin="0,6,0,0"
+                         Foreground="#FF6B7280"
+                         TextWrapping="Wrap"
+                         Text="Set to 0 to remove the post-switch pause. Higher values are safer when inputs bounce between rooms." />
+              <TextBlock Margin="0,6,0,0"
+                         Foreground="#FFB91C1C"
+                         Text="{Binding CooldownError}" />
+            </StackPanel>
+          </Grid>
 
-        <Border Width="220"
-                Margin="0,0,12,12"
-                Padding="16"
-                Background="#FFF9FAFB"
-                BorderBrush="#FFE5E7EB"
-                BorderThickness="1"
-                CornerRadius="10">
-          <StackPanel>
-            <TextBlock Foreground="#FF6B7280"
-                       Text="Current Manual Lock Preference" />
-            <TextBlock Margin="0,6,0,0"
-                       FontSize="20"
+          <Grid Margin="0,18,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="240" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock VerticalAlignment="Center"
                        FontWeight="SemiBold"
-                       Text="{Binding IsManualSwitchingLocked}" />
+                       Text="Recent activity window (seconds)" />
+            <StackPanel Grid.Column="1">
+              <TextBox Width="180"
+                       HorizontalAlignment="Left"
+                       Text="{Binding RecentActivityThresholdSecondsText, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBlock Margin="0,6,0,0"
+                         Foreground="#FF6B7280"
+                         TextWrapping="Wrap"
+                         Text="When priority handling is enabled, this is how long the current zone is considered recently active after a successful switch." />
+              <TextBlock Margin="0,6,0,0"
+                         Foreground="#FFB91C1C"
+                         Text="{Binding RecentActivityThresholdError}" />
+            </StackPanel>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Border Margin="0,0,0,16"
+              Padding="18"
+              Background="#FFF9FAFB"
+              BorderBrush="#FFE5E7EB"
+              BorderThickness="1"
+              CornerRadius="12">
+        <StackPanel>
+          <TextBlock FontSize="18"
+                     FontWeight="SemiBold"
+                     Text="Priority Behaviour" />
+          <TextBlock Margin="0,6,0,0"
+                     Foreground="#FF4B5563"
+                     TextWrapping="Wrap"
+                     Text="Choose how zone priority should influence switching when more than one mapped zone is active around the same time." />
+
+          <ComboBox Margin="0,16,0,0"
+                    ItemsSource="{Binding PriorityModes}"
+                    SelectedItem="{Binding SelectedPriorityMode}"
+                    DisplayMemberPath="Label" />
+
+          <Border Margin="0,12,0,0"
+                  Padding="12"
+                  Background="White"
+                  BorderBrush="#FFE5E7EB"
+                  BorderThickness="1"
+                  CornerRadius="10">
+            <TextBlock TextWrapping="Wrap"
+                       Foreground="#FF4B5563"
+                       Text="{Binding SelectedPriorityMode.Description}" />
+          </Border>
+          <TextBlock Margin="0,6,0,0"
+                     Foreground="#FFB91C1C"
+                     Text="{Binding PriorityModeError}" />
+        </StackPanel>
+      </Border>
+
+      <Border Padding="14"
+              Background="#FFF8FAFC"
+              BorderBrush="#FFE5E7EB"
+              BorderThickness="1"
+              CornerRadius="10">
+        <DockPanel LastChildFill="False">
+          <TextBlock DockPanel.Dock="Left"
+                     VerticalAlignment="Center"
+                     Text="{Binding SaveStatusMessage}">
+            <TextBlock.Style>
+              <Style TargetType="TextBlock">
+                <Setter Property="Foreground"
+                        Value="#FF4B5563" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding SaveStatusIsError}"
+                               Value="True">
+                    <Setter Property="Foreground"
+                            Value="#FFB91C1C" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+          <StackPanel DockPanel.Dock="Right"
+                      Orientation="Horizontal"
+                      HorizontalAlignment="Right">
+            <Button Margin="0,0,8,0"
+                    Padding="14,8"
+                    Command="{Binding RestoreDefaultsCommand}"
+                    Content="Restore defaults" />
+            <Button Padding="14,8"
+                    Command="{Binding SaveCommand}"
+                    Content="Save settings" />
           </StackPanel>
-        </Border>
-      </WrapPanel>
+        </DockPanel>
+      </Border>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

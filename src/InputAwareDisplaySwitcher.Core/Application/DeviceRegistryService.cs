@@ -56,7 +56,7 @@ public sealed class DeviceRegistryService
         ArgumentNullException.ThrowIfNull(snapshot);
 
         var candidateKeys = observation.GetCandidatePersistenceKeys();
-        var matchedDevice = snapshot.Devices.FirstOrDefault(device => GetPersistenceKeys(device)
+        var matchedDevice = snapshot.Devices.FirstOrDefault(device => DevicePersistenceKeyResolver.GetPersistenceKeys(device)
             .Intersect(candidateKeys, StringComparer.OrdinalIgnoreCase)
             .Any());
 
@@ -70,7 +70,7 @@ public sealed class DeviceRegistryService
             };
         }
 
-        var matchedKey = GetPersistenceKeys(matchedDevice)
+        var matchedKey = DevicePersistenceKeyResolver.GetPersistenceKeys(matchedDevice)
             .Intersect(candidateKeys, StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault();
 
@@ -148,40 +148,6 @@ public sealed class DeviceRegistryService
             MatchedByPersistenceKey = matchedKey,
             Message = $"Device '{matchedDevice.FriendlyName}' resolved to zone '{zone.Name}' and profile '{profile.Name}'."
         };
-    }
-
-    private static IEnumerable<string> GetPersistenceKeys(PersistedDeviceIdentity device)
-    {
-        if (!string.IsNullOrWhiteSpace(device.PreferredPersistenceKey))
-        {
-            yield return device.PreferredPersistenceKey;
-        }
-
-        var evidence = device.IdentityEvidence;
-
-        var instanceKey = RuntimeDeviceObservation.BuildInstanceKey(evidence.InstanceId);
-        if (!string.IsNullOrWhiteSpace(instanceKey))
-        {
-            yield return instanceKey;
-        }
-
-        var pathKey = RuntimeDeviceObservation.BuildPathKey(evidence.NormalizedDevicePath);
-        if (!string.IsNullOrWhiteSpace(pathKey))
-        {
-            yield return pathKey;
-        }
-
-        var rawPathKey = RuntimeDeviceObservation.BuildRawPathKey(evidence.RawDevicePath);
-        if (!string.IsNullOrWhiteSpace(rawPathKey))
-        {
-            yield return rawPathKey;
-        }
-
-        var vidPidKey = RuntimeDeviceObservation.BuildVidPidKey(device.DeviceKind, evidence.VendorId, evidence.ProductId);
-        if (!string.IsNullOrWhiteSpace(vidPidKey))
-        {
-            yield return vidPidKey;
-        }
     }
 
     private static void Upsert<T>(

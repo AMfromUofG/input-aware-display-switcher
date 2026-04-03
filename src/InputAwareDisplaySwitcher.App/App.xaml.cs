@@ -4,6 +4,7 @@ using InputAwareDisplaySwitcher.Core.Application;
 using InputAwareDisplaySwitcher.Core.Domain.Diagnostics;
 using InputAwareDisplaySwitcher.Infrastructure.Configuration;
 using InputAwareDisplaySwitcher.Infrastructure.Diagnostics;
+using InputAwareDisplaySwitcher.Infrastructure.Windows.Input;
 using InputAwareDisplaySwitcher.App.ViewModels;
 
 namespace InputAwareDisplaySwitcher.App;
@@ -35,10 +36,18 @@ public partial class App : Application
             var configurationStore = new JsonAppConfigurationStore(configurationPath, diagnostics);
             var configurationService = new ApplicationConfigurationService(configurationStore);
             var configuration = await configurationService.LoadAsync();
+            var configurationSession = new AppConfigurationSession(configurationService, configuration);
+            var deviceManagementService = new DeviceManagementService();
+            var deviceSnapshotProvider = new WindowsInputDeviceSnapshotProvider(diagnostics);
 
             var mainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(configuration, diagnostics, configurationPath)
+                DataContext = new MainWindowViewModel(
+                    configurationSession,
+                    deviceSnapshotProvider,
+                    deviceManagementService,
+                    diagnostics,
+                    configurationPath)
             };
 
             diagnostics.Record(

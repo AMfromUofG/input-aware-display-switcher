@@ -114,9 +114,41 @@ public sealed class JsonAppConfigurationStore : IAppConfigurationStore
         return configuration with
         {
             Version = configuration.Version <= 0 ? AppConfiguration.CurrentVersion : configuration.Version,
-            DeviceRegistry = configuration.DeviceRegistry ?? new DeviceRegistrySnapshot(),
-            SwitchingPolicy = configuration.SwitchingPolicy ?? new SwitchingPolicy(),
+            DeviceRegistry = SanitizeDeviceRegistry(configuration.DeviceRegistry),
+            SwitchingPolicy = SanitizePolicy(configuration.SwitchingPolicy),
             Preferences = configuration.Preferences ?? new AppPreferences()
+        };
+    }
+
+    private static DeviceRegistrySnapshot SanitizeDeviceRegistry(DeviceRegistrySnapshot? registry)
+    {
+        if (registry is null)
+        {
+            return new DeviceRegistrySnapshot();
+        }
+
+        return registry with
+        {
+            Devices = registry.Devices ?? [],
+            Zones = registry.Zones ?? [],
+            DisplayProfiles = registry.DisplayProfiles ?? []
+        };
+    }
+
+    private static SwitchingPolicy SanitizePolicy(SwitchingPolicy? policy)
+    {
+        var defaults = new SwitchingPolicy();
+        var candidate = policy ?? defaults;
+
+        return candidate with
+        {
+            Cooldown = candidate.Cooldown < TimeSpan.Zero ? defaults.Cooldown : candidate.Cooldown,
+            RecentActivityThreshold = candidate.RecentActivityThreshold < TimeSpan.Zero
+                ? defaults.RecentActivityThreshold
+                : candidate.RecentActivityThreshold,
+            PriorityMode = Enum.IsDefined(candidate.PriorityMode)
+                ? candidate.PriorityMode
+                : defaults.PriorityMode
         };
     }
 
@@ -129,7 +161,10 @@ public sealed class JsonAppConfigurationStore : IAppConfigurationStore
             ["deviceCount"] = configuration.DeviceRegistry.Devices.Count.ToString(),
             ["zoneCount"] = configuration.DeviceRegistry.Zones.Count.ToString(),
             ["profileCount"] = configuration.DeviceRegistry.DisplayProfiles.Count.ToString(),
+            ["automationEnabled"] = configuration.SwitchingPolicy.AutomationEnabled.ToString(),
             ["cooldown"] = configuration.SwitchingPolicy.Cooldown.ToString(),
+            ["recentActivityThreshold"] = configuration.SwitchingPolicy.RecentActivityThreshold.ToString(),
+            ["priorityMode"] = configuration.SwitchingPolicy.PriorityMode.ToString(),
             ["manualLockStopsSwitching"] = configuration.SwitchingPolicy.ManualLockStopsSwitching.ToString(),
             ["allowSameProfileRefresh"] = configuration.SwitchingPolicy.AllowSameProfileRefresh.ToString(),
             ["isManualSwitchingLocked"] = configuration.Preferences.IsManualSwitchingLocked.ToString()

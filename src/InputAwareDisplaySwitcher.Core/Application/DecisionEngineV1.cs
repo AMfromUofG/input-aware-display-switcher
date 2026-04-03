@@ -26,6 +26,11 @@ public sealed class DecisionEngineV1 : IDecisionEngine
                 return Blocked(request, SwitchDecisionReason.MissingDisplayProfile, resolution.Message ?? "The resolved display profile is unavailable.");
         }
 
+        if (!request.Policy.AutomationEnabled)
+        {
+            return Blocked(request, SwitchDecisionReason.AutomationDisabled, "Automatic switching is disabled.");
+        }
+
         if (request.Policy.ManualLockStopsSwitching && request.RuntimeState.IsManualSwitchingLocked)
         {
             return Blocked(request, SwitchDecisionReason.ManualLockActive, "Automatic switching is currently locked.");
@@ -46,6 +51,34 @@ public sealed class DecisionEngineV1 : IDecisionEngine
                     TargetZoneId = resolution.Zone?.ZoneId,
                     TargetDisplayProfileId = resolution.TargetProfile?.DisplayProfileId,
                     CooldownEndsAtUtc = cooldownEndsAtUtc
+                };
+            }
+        }
+
+        if (request.Policy.PriorityMode == PriorityMode.PreferHigherPriorityZone
+            && request.Policy.RecentActivityThreshold > TimeSpan.Zero
+            && request.RuntimeState.LastInputAtUtc.HasValue
+            && !string.IsNullOrWhiteSpace(request.RuntimeState.CurrentZoneId)
+            && !string.IsNullOrWhiteSpace(request.RuntimeState.LastInputZoneId)
+            && string.Equals(request.RuntimeState.CurrentZoneId, request.RuntimeState.LastInputZoneId, StringComparison.OrdinalIgnoreCase)
+            && resolution.Zone is not null
+            && !string.Equals(request.RuntimeState.CurrentZoneId, resolution.Zone.ZoneId, StringComparison.OrdinalIgnoreCase))
+        {
+            var recentActivityEndsAtUtc = request.RuntimeState.LastInputAtUtc.Value.Add(request.Policy.RecentActivityThreshold);
+            var currentZoneWasRecentlyActivated = recentActivityEndsAtUtc > now;
+            var currentZoneHasPriority = request.RuntimeState.CurrentZonePriority > resolution.Zone.Priority;
+
+            if (currentZoneWasRecentlyActivated && currentZoneHasPriority)
+            {
+                return new SwitchDecision
+                {
+                    Status = SwitchDecisionStatus.Blocked,
+                    Reason = SwitchDecisionReason.PrioritySuppressed,
+                    Message = $"Recent activity keeps zone '{request.RuntimeState.CurrentZoneId}' active until {recentActivityEndsAtUtc:O} because it has higher priority.",
+                    EvaluatedAtUtc = now,
+                    MatchedDeviceId = resolution.MatchedDevice?.DeviceId,
+                    TargetZoneId = resolution.Zone.ZoneId,
+                    TargetDisplayProfileId = resolution.TargetProfile?.DisplayProfileId
                 };
             }
         }

@@ -11,6 +11,8 @@ public static class DiagnosticEventTypes
     public const string ConfigurationLoadFailed = "configuration.load_failed";
     public const string ConfigurationSaved = "configuration.saved";
     public const string ConfigurationSaveFailed = "configuration.save_failed";
+    public const string DeviceSnapshotRefreshed = "devices.snapshot_refreshed";
+    public const string DeviceSnapshotRefreshFailed = "devices.snapshot_refresh_failed";
     public const string SwitchingControllerStarted = "switching.controller_started";
     public const string SwitchingControllerStopped = "switching.controller_stopped";
     public const string InputActivityDetected = "input.activity_detected";
