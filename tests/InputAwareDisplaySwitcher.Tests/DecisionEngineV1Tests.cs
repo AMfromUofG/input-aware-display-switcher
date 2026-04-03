@@ -56,6 +56,22 @@ public sealed class DecisionEngineV1Tests
     }
 
     [Fact]
+    public void Evaluate_BlocksWhenAutomationIsDisabled()
+    {
+        var request = CreateRequest(
+            CreateResolvedResolution(),
+            policy: new SwitchingPolicy
+            {
+                AutomationEnabled = false
+            });
+
+        var decision = _engine.Evaluate(request);
+
+        Assert.Equal(SwitchDecisionStatus.Blocked, decision.Status);
+        Assert.Equal(SwitchDecisionReason.AutomationDisabled, decision.Reason);
+    }
+
+    [Fact]
     public void Evaluate_BlocksWhenCooldownIsActive()
     {
         var now = DateTimeOffset.UtcNow;
@@ -76,6 +92,33 @@ public sealed class DecisionEngineV1Tests
         Assert.Equal(SwitchDecisionStatus.Blocked, decision.Status);
         Assert.Equal(SwitchDecisionReason.CooldownActive, decision.Reason);
         Assert.NotNull(decision.CooldownEndsAtUtc);
+    }
+
+    [Fact]
+    public void Evaluate_BlocksLowerPriorityZoneDuringRecentActivityWindow()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var request = CreateRequest(
+            CreateResolvedResolution(priority: 5),
+            new ApplicationRuntimeState
+            {
+                CurrentZoneId = "living-room",
+                CurrentZonePriority = 10,
+                LastInputAtUtc = now.AddSeconds(-5),
+                LastInputZoneId = "living-room"
+            },
+            new SwitchingPolicy
+            {
+                Cooldown = TimeSpan.Zero,
+                RecentActivityThreshold = TimeSpan.FromSeconds(15),
+                PriorityMode = PriorityMode.PreferHigherPriorityZone
+            },
+            now);
+
+        var decision = _engine.Evaluate(request);
+
+        Assert.Equal(SwitchDecisionStatus.Blocked, decision.Status);
+        Assert.Equal(SwitchDecisionReason.PrioritySuppressed, decision.Reason);
     }
 
     [Fact]
@@ -125,14 +168,15 @@ public sealed class DecisionEngineV1Tests
         };
     }
 
-    private static DeviceRegistryResolution CreateResolvedResolution()
+    private static DeviceRegistryResolution CreateResolvedResolution(int priority = 10)
     {
         var device = CreateDevice();
         var zone = new ZoneDefinition
         {
             ZoneId = "desk",
             Name = "Desk",
-            PreferredDisplayProfileId = "desk-profile"
+            PreferredDisplayProfileId = "desk-profile",
+            Priority = priority
         };
         var profile = new DisplayProfile
         {

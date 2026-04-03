@@ -3,12 +3,14 @@ namespace InputAwareDisplaySwitcher.Core.Domain.Switching;
 public enum SwitchDecisionReason
 {
     Allowed = 0,
-    UnknownDevice = 1,
-    DisabledDevice = 2,
-    UnmappedDevice = 3,
-    DisabledZone = 4,
-    MissingDisplayProfile = 5,
-    ManualLockActive = 6,
-    CooldownActive = 7,
-    AlreadyActive = 8
+    AutomationDisabled = 1,
+    UnknownDevice = 2,
+    DisabledDevice = 3,
+    UnmappedDevice = 4,
+    DisabledZone = 5,
+    MissingDisplayProfile = 6,
+    ManualLockActive = 7,
+    CooldownActive = 8,
+    PrioritySuppressed = 9,
+    AlreadyActive = 10
 }

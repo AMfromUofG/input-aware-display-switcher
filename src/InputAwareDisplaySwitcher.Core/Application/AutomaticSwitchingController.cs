@@ -120,12 +120,17 @@ public sealed class AutomaticSwitchingController
             CurrentZoneId = outcome.ExecutionResult.Success
                 ? outcome.Decision.TargetZoneId
                 : currentState.CurrentZoneId,
+            CurrentZonePriority = outcome.ExecutionResult.Success
+                ? outcome.Resolution.Zone?.Priority ?? currentState.CurrentZonePriority
+                : currentState.CurrentZonePriority,
             CurrentDisplayProfileId = outcome.ExecutionResult.Success
                 ? outcome.Decision.TargetDisplayProfileId
                 : currentState.CurrentDisplayProfileId,
             LastSwitchAtUtc = outcome.ExecutionResult.Success
                 ? outcome.ExecutionResult.RecordedAtUtc
                 : currentState.LastSwitchAtUtc,
+            LastInputAtUtc = outcome.Observation.ObservedAtUtc,
+            LastInputZoneId = outcome.Resolution.Zone?.ZoneId ?? currentState.LastInputZoneId,
             LastMatchedDeviceId = outcome.Decision.MatchedDeviceId ?? currentState.LastMatchedDeviceId
         };
     }
@@ -150,7 +155,10 @@ public sealed class AutomaticSwitchingController
     {
         return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
+            ["automationEnabled"] = policy.AutomationEnabled.ToString(),
             ["cooldown"] = policy.Cooldown.ToString(),
+            ["recentActivityThreshold"] = policy.RecentActivityThreshold.ToString(),
+            ["priorityMode"] = policy.PriorityMode.ToString(),
             ["manualLockStopsSwitching"] = policy.ManualLockStopsSwitching.ToString(),
             ["allowSameProfileRefresh"] = policy.AllowSameProfileRefresh.ToString()
         };
@@ -161,8 +169,11 @@ public sealed class AutomaticSwitchingController
         return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
             ["currentZoneId"] = state.CurrentZoneId,
+            ["currentZonePriority"] = state.CurrentZonePriority.ToString(),
             ["currentDisplayProfileId"] = state.CurrentDisplayProfileId,
             ["lastSwitchAtUtc"] = state.LastSwitchAtUtc?.ToString("O"),
+            ["lastInputAtUtc"] = state.LastInputAtUtc?.ToString("O"),
+            ["lastInputZoneId"] = state.LastInputZoneId,
             ["isManualSwitchingLocked"] = state.IsManualSwitchingLocked.ToString(),
             ["lastMatchedDeviceId"] = state.LastMatchedDeviceId
         };
@@ -177,10 +188,16 @@ public sealed class AutomaticSwitchingController
         {
             ["previousZoneId"] = previousState.CurrentZoneId,
             ["updatedZoneId"] = updatedState.CurrentZoneId,
+            ["previousZonePriority"] = previousState.CurrentZonePriority.ToString(),
+            ["updatedZonePriority"] = updatedState.CurrentZonePriority.ToString(),
             ["previousDisplayProfileId"] = previousState.CurrentDisplayProfileId,
             ["updatedDisplayProfileId"] = updatedState.CurrentDisplayProfileId,
             ["previousLastSwitchAtUtc"] = previousState.LastSwitchAtUtc?.ToString("O"),
             ["updatedLastSwitchAtUtc"] = updatedState.LastSwitchAtUtc?.ToString("O"),
+            ["previousLastInputAtUtc"] = previousState.LastInputAtUtc?.ToString("O"),
+            ["updatedLastInputAtUtc"] = updatedState.LastInputAtUtc?.ToString("O"),
+            ["previousLastInputZoneId"] = previousState.LastInputZoneId,
+            ["updatedLastInputZoneId"] = updatedState.LastInputZoneId,
             ["previousLastMatchedDeviceId"] = previousState.LastMatchedDeviceId,
             ["updatedLastMatchedDeviceId"] = updatedState.LastMatchedDeviceId,
             ["decisionStatus"] = outcome.Decision.Status.ToString(),

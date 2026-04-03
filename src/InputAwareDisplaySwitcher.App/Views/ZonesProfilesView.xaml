@@ -5,12 +5,13 @@
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
     <TextBlock Margin="0,0,0,12"
                Foreground="#FF4B5563"
                TextWrapping="Wrap"
-               Text="Zones remain the user-defined logical contexts, and profiles remain logical display intents. This view is the placeholder for editing both." />
+               Text="Create the logical zones and display profiles that device assignments will point to. Keep this list small and descriptive so switching decisions stay easy to understand." />
 
     <Grid Grid.Row="1">
       <Grid.ColumnDefinitions>
@@ -19,53 +20,178 @@
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
-      <GroupBox Grid.Column="0"
-                Header="Zones">
-        <DataGrid ItemsSource="{Binding Zones}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  IsReadOnly="True">
-          <DataGrid.Columns>
-            <DataGridTextColumn Header="Name"
-                                Binding="{Binding Name}"
-                                Width="2*" />
-            <DataGridTextColumn Header="Priority"
-                                Binding="{Binding Priority}"
-                                Width="*" />
-            <DataGridTextColumn Header="Profile"
-                                Binding="{Binding PreferredDisplayProfileId}"
-                                Width="2*" />
-            <DataGridCheckBoxColumn Header="Enabled"
-                                    Binding="{Binding IsEnabled}"
-                                    Width="90" />
-          </DataGrid.Columns>
-        </DataGrid>
-      </GroupBox>
+      <Grid Grid.Column="0">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-      <GroupBox Grid.Column="2"
-                Header="Display Profiles">
-        <DataGrid ItemsSource="{Binding Profiles}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  IsReadOnly="True">
-          <DataGrid.Columns>
-            <DataGridTextColumn Header="Name"
-                                Binding="{Binding Name}"
-                                Width="2*" />
-            <DataGridTextColumn Header="Intent"
-                                Binding="{Binding IntentKind}"
-                                Width="*" />
-            <DataGridTextColumn Header="Description"
-                                Binding="{Binding Description}"
-                                Width="2*" />
-            <DataGridCheckBoxColumn Header="Enabled"
-                                    Binding="{Binding IsEnabled}"
-                                    Width="90" />
-          </DataGrid.Columns>
-        </DataGrid>
-      </GroupBox>
+        <GroupBox Header="Zones">
+          <DataGrid ItemsSource="{Binding Zones}"
+                    AutoGenerateColumns="False"
+                    CanUserAddRows="False"
+                    CanUserDeleteRows="False"
+                    IsReadOnly="True">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Name"
+                                  Binding="{Binding Name}"
+                                  Width="2*" />
+              <DataGridTextColumn Header="Priority"
+                                  Binding="{Binding Priority}"
+                                  Width="*" />
+              <DataGridTextColumn Header="Profile"
+                                  Binding="{Binding PreferredDisplayProfileId}"
+                                  Width="2*" />
+              <DataGridCheckBoxColumn Header="Enabled"
+                                      Binding="{Binding IsEnabled}"
+                                      Width="90" />
+            </DataGrid.Columns>
+          </DataGrid>
+        </GroupBox>
+
+        <Border Grid.Row="1"
+                Margin="0,16,0,0"
+                Padding="16"
+                Background="#FFF9FAFB"
+                BorderBrush="#FFE5E7EB"
+                BorderThickness="1"
+                CornerRadius="12">
+          <StackPanel>
+            <TextBlock FontSize="16"
+                       FontWeight="SemiBold"
+                       Text="Add Zone" />
+            <TextBlock Margin="0,6,0,0"
+                       Foreground="#FF4B5563"
+                       TextWrapping="Wrap"
+                       Text="Each zone points to one display profile and can be given a priority for suppression behaviour." />
+
+            <TextBlock Margin="0,14,0,4"
+                       FontWeight="SemiBold"
+                       Text="Zone name" />
+            <TextBox Text="{Binding NewZoneName, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBlock Margin="0,12,0,4"
+                       FontWeight="SemiBold"
+                       Text="Description" />
+            <TextBox Text="{Binding NewZoneDescription, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBlock Margin="0,12,0,4"
+                       FontWeight="SemiBold"
+                       Text="Priority" />
+            <TextBox Width="120"
+                     HorizontalAlignment="Left"
+                     Text="{Binding NewZonePriorityText, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBlock Margin="0,12,0,4"
+                       FontWeight="SemiBold"
+                       Text="Display profile" />
+            <ComboBox ItemsSource="{Binding ProfileOptions}"
+                      SelectedItem="{Binding SelectedProfileForZone}"
+                      DisplayMemberPath="DisplayName" />
+
+            <Button Margin="0,16,0,0"
+                    Width="120"
+                    HorizontalAlignment="Left"
+                    Command="{Binding AddZoneCommand}"
+                    Content="Add zone" />
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <Grid Grid.Column="2">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <GroupBox Header="Display Profiles">
+          <DataGrid ItemsSource="{Binding Profiles}"
+                    AutoGenerateColumns="False"
+                    CanUserAddRows="False"
+                    CanUserDeleteRows="False"
+                    IsReadOnly="True">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Name"
+                                  Binding="{Binding Name}"
+                                  Width="2*" />
+              <DataGridTextColumn Header="Intent"
+                                  Binding="{Binding IntentKind}"
+                                  Width="*" />
+              <DataGridTextColumn Header="Description"
+                                  Binding="{Binding Description}"
+                                  Width="2*" />
+              <DataGridCheckBoxColumn Header="Enabled"
+                                      Binding="{Binding IsEnabled}"
+                                      Width="90" />
+            </DataGrid.Columns>
+          </DataGrid>
+        </GroupBox>
+
+        <Border Grid.Row="1"
+                Margin="0,16,0,0"
+                Padding="16"
+                Background="#FFF9FAFB"
+                BorderBrush="#FFE5E7EB"
+                BorderThickness="1"
+                CornerRadius="12">
+          <StackPanel>
+            <TextBlock FontSize="16"
+                       FontWeight="SemiBold"
+                       Text="Add Display Profile" />
+            <TextBlock Margin="0,6,0,0"
+                       Foreground="#FF4B5563"
+                       TextWrapping="Wrap"
+                       Text="Profiles remain logical display intents rather than hard-coded Windows payloads." />
+
+            <TextBlock Margin="0,14,0,4"
+                       FontWeight="SemiBold"
+                       Text="Profile name" />
+            <TextBox Text="{Binding NewProfileName, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBlock Margin="0,12,0,4"
+                       FontWeight="SemiBold"
+                       Text="Description" />
+            <TextBox Text="{Binding NewProfileDescription, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBlock Margin="0,12,0,4"
+                       FontWeight="SemiBold"
+                       Text="Intent" />
+            <ComboBox ItemsSource="{Binding ProfileIntentKinds}"
+                      SelectedItem="{Binding NewProfileIntentKind}" />
+
+            <Button Margin="0,16,0,0"
+                    Width="140"
+                    HorizontalAlignment="Left"
+                    Command="{Binding AddProfileCommand}"
+                    Content="Add profile" />
+          </StackPanel>
+        </Border>
+      </Grid>
     </Grid>
+
+    <Border Grid.Row="2"
+            Margin="0,16,0,0"
+            Padding="14"
+            Background="#FFF8FAFC"
+            BorderBrush="#FFE5E7EB"
+            BorderThickness="1"
+            CornerRadius="10">
+      <TextBlock TextWrapping="Wrap"
+                 Text="{Binding StatusMessage}">
+        <TextBlock.Style>
+          <Style TargetType="TextBlock">
+            <Setter Property="Foreground"
+                    Value="#FF4B5563" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding StatusIsError}"
+                           Value="True">
+                <Setter Property="Foreground"
+                        Value="#FFB91C1C" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </TextBlock.Style>
+      </TextBlock>
+    </Border>
   </Grid>
 </UserControl>
